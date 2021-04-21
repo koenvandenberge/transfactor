@@ -1,11 +1,29 @@
 Package: transfactor
-Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Transcription factor activity estimator
+Version: 0.99.0
+Date: 2021-04-21
+Authors@R: 
+    person(given = "Koen",
+           family = "Van den Berge",
+           role = c("aut", "cre"),
+           email = "koen.vdberge@gmail.com",
+           comment = c(ORCID = "0000-0002-1833-8478"))
+Description: Estimation of transcription factor activity by probabilistic assignment of mRNA molecules to the transcription factors that produced them.
+License: MIT
+URL: https://github.com/koenvandenberge/transfactor
+BugReports: https://support.bioconductor.org/t/transfactor
+biocViews: Software
 Encoding: UTF-8
 LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
+Suggests: 
+    BiocStyle,
+    covr,
+    knitr,
+    RefManageR,
+    rmarkdown,
+    sessioninfo,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
