@@ -28,6 +28,9 @@
 #' @param repressions Logical: should repressions be taken into account?
 #' @param rho_t Thinning factor to account for repressions. \code{NULL} by default.
 #' @param sparse Logical: should sparse initialization be used?
+#' @return A list of objects, including
+#'  - mu_tc: TF activity for each TF t in each group c (as defined by columns in U).
+#'  - mu_gtc: The expected number of molecules for gene g produced by TF t in group c.
 #' @examples
 #' x=2
 #' @export

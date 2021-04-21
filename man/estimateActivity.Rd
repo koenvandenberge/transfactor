@@ -66,6 +66,13 @@ Defaults to 0.}
 
 \item{sparse}{Logical: should sparse initialization be used?}
 }
+\value{
+A list of objects, including
+\itemize{
+\item mu_tc: TF activity for each TF t in each group c (as defined by columns in U).
+\item mu_gtc: The expected number of molecules for gene g produced by TF t in group c.
+}
+}
 \description{
 Estimate TF activity given a gene regulatory network.
 }

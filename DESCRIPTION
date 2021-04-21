@@ -8,11 +8,15 @@ Authors@R:
            role = c("aut", "cre"),
            email = "koen.vdberge@gmail.com",
            comment = c(ORCID = "0000-0002-1833-8478"))
-Description: Estimation of transcription factor activity by probabilistic assignment of mRNA molecules to the transcription factors that produced them.
+Description: Estimation of transcription factor (TF) activity by probabilistic assignment of mRNA molecules to the transcription factors that produced them, using a gene regulatory network (GRN). The method allows repressions in the GRN that are incorporated in the TF activity estimation. It also allows the incorporation of prior information on the confidence of each edge in the GRN, to be used in the TF activity estimation.
 License: MIT
 URL: https://github.com/koenvandenberge/transfactor
 BugReports: https://support.bioconductor.org/t/transfactor
-biocViews: Software
+biocViews: 
+    Software,
+    SingleCell,
+    Transcriptomics,
+    RNASeq
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
