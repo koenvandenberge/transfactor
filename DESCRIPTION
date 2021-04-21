@@ -32,8 +32,8 @@ Suggests:
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Collate: 
+    'utils.R'
     'activityEstimationFunctions.R'
     'allGenerics.R'
     'estimateActivity.R'
     'tfDistance.R'
-    'utils.R'

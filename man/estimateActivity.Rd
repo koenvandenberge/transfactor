@@ -11,6 +11,8 @@ estimateActivity(counts, X, ...)
   counts,
   X,
   U = NULL,
+  alpha = NULL,
+  alphaScale = 1,
   maxIter = 500,
   plot = FALSE,
   verbose = FALSE,
@@ -31,6 +33,16 @@ estimateActivity(counts, X, ...)
 
 \item{U}{Design matrix, of dimensions n x p.}
 
+\item{alpha}{Prior belief in GRN edges.}
+
+\item{alphaScale}{Scaling factor to tune the belief of the prior versus the
+observed dataset. Setting \code{alphaScale=1} (the default) means assuming equal belief to
+the prior as to the observed dataset. Setting \code{alphaScale=1/2}
+(\code{alphaScale=2}) means you belief the prior half (twice) as much as the
+observed data. Note that providing a very low number will result in many
+estimate TF activities to equal zero. Indeed, due to the -1 in the
+calculation for mu_gtc, many will be negative and will hence be reset to zero.}
+
 \item{maxIter}{Maximum number of iterations.}
 
 \item{plot}{Logical: should log-likelihood be plotted across iterations?}
@@ -49,7 +61,13 @@ Defaults to 0.}
 \item{rho_t}{Thinning factor to account for repressions. \code{NULL} by default.}
 
 \item{sparse}{Logical: should sparse initialization be used?}
+
+\item{model}{The model to use. Options are \code{"poisson"}, \code{"dirMult"},
+and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.}
 }
 \description{
 Estimate TF activity given a gene regulatory network.
+}
+\examples{
+x=2
 }

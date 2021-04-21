@@ -10,6 +10,14 @@
 #' @param model The model to use. Options are \code{"poisson"}, \code{"dirMult"},
 #' and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.
 #' @param U Design matrix, of dimensions n x p.
+#' @param alpha Prior belief in GRN edges.
+#' @param alphaScale Scaling factor to tune the belief of the prior versus the
+#' observed dataset. Setting \code{alphaScale=1} (the default) means assuming equal belief to
+#' the prior as to the observed dataset. Setting \code{alphaScale=1/2}
+#' (\code{alphaScale=2}) means you belief the prior half (twice) as much as the
+#' observed data. Note that providing a very low number will result in many
+#' estimate TF activities to equal zero. Indeed, due to the -1 in the
+#' calculation for mu_gtc, many will be negative and will hence be reset to zero.
 #' @param maxIter Maximum number of iterations.
 #' @param plot Logical: should log-likelihood be plotted across iterations?
 #' @param verbose Logical: should log-likelihood and iteration be printed?
@@ -21,6 +29,7 @@
 #' @param rho_t Thinning factor to account for repressions. \code{NULL} by default.
 #' @param sparse Logical: should sparse initialization be used?
 #' @examples
+#' x=2
 #' @export
 #' @rdname estimateActivity
 #' @import SingleCellExperiment
@@ -30,6 +39,8 @@ setMethod(f = "estimateActivity",
           definition = function(counts,
                                 X,
                                 U = NULL,
+                                alpha = NULL,
+                                alphaScale = 1,
                                 maxIter = 500,
                                 plot = FALSE,
                                 verbose = FALSE,
@@ -39,6 +50,8 @@ setMethod(f = "estimateActivity",
                                 repressions = TRUE,
                                 rho_t = NULL,
                                 sparse = TRUE){
+
+            # TODO: restrict range on alpha (lower bound)?
 
             ## checks on X
             if(!all(rownames(X) %in% rownames(counts))){
@@ -59,6 +72,21 @@ setMethod(f = "estimateActivity",
               res <- poissonEstimation(counts = counts,
                                        X = X,
                                        U = U,
+                                       maxIter = maxIter,
+                                       plot = plot,
+                                       verbose = verbose,
+                                       epsilon = epsilon-2,
+                                       iterOLS = iterOLS,
+                                       lassoFamily = lassoFamily,
+                                       repressions = repressions,
+                                       rho_t = rho_t,
+                                       sparse = sparse)
+            } else if(model == "dirMult"){
+              res <- dirMultEstimation(counts = counts,
+                                       X = X,
+                                       U = U,
+                                       alpha = alpha,
+                                       alphaScale = alphaScale,
                                        maxIter = maxIter,
                                        plot = plot,
                                        verbose = verbose,
