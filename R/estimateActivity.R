@@ -1,4 +1,5 @@
-#' @include activityEstimationFunctions.R, utils.R
+#' @incldue utils.R
+#' @include activityEstimationFunctions.R
 
 
 #' @title Estimate TF activity
@@ -37,12 +38,12 @@ setMethod(f = "estimateActivity",
                                 rho_t = NULL,
                                 sparse = TRUE){
 
-            ## checks on dimensions
+            ## checks on X
             if(!all(rownames(X) %in% rownames(counts))){
               stop("Not all genes in X are in the count matrix.")
             }
-            if(!all(colnames(X) %in% rownames(counts))){
-              stop("Not all transcription factors in X are in the count matrix.")
+            if(is.null(colnames(X))){
+              colnames(X) <- paste0("tf", 1:ncol(X))
             }
 
             ## checks on U

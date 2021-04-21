@@ -7,7 +7,7 @@ pkgVer <- function(pkg) {
 c(
 
     bibentry(bibtype="manual",
-        title = "",
+        title = "transfactor",
         author = personList(
             as.person("koenvandenberge")
         ),
@@ -17,7 +17,7 @@ c(
         doi = '10.18129/B9.bioc.transfactor'
     ),
     bibentry(bibtype="article",
-        title = "",
+        title = "transfactor",
         author = personList(
             as.person("koenvandenberge")
         ),

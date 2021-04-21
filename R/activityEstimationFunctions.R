@@ -1,33 +1,15 @@
 poissonEstimation <- function(counts,
-                                                                   X,
-                                                                   rho_t=NULL,
-                                                                   U=NULL,
-                                                                   maxIter=20,
-                                                                   plot=FALSE,
-                                                                   verbose=FALSE,
-                                                                   epsilon=1e-2,
-                                                                   iterOLS=0,
-                                                                   lassoFamily = "gaussian",
-                                                                   repressions=TRUE,
-                                                                   sparse=TRUE){
-  # counts is nGenes x nCells count matrix of gene expression
-  # X is TF regulation matrix with dims nGenes x nTranscriptionFactors
-  # U is nCells x nVariables design matrix
-  # maxIter is number of iterations
-  # qSteps are the quantile steps to make pseudotime bins
-
-  if(is.null(rownames(X))){
-    stop("Please provide rownames for X.")
-  }
-
-  if(!all(rownames(X) %in% rownames(counts))){
-    stop("Not all gene names in X are present in counts.")
-  }
-
-  if(is.null(colnames(X))){
-    colnames(X) <- paste0("tf", 1:ncol(X))
-  }
-
+                              X,
+                              rho_t=NULL,
+                              U=NULL,
+                              maxIter=20,
+                              plot=FALSE,
+                              verbose=FALSE,
+                              epsilon=1e-2,
+                              iterOLS=0,
+                              lassoFamily = "gaussian",
+                              repressions=TRUE,
+                              sparse=TRUE){
 
   ## only keep repressions between TFs
   tfsInTargets <- colnames(X)[colnames(X) %in% rownames(X)]
