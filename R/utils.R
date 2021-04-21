@@ -22,7 +22,6 @@ sparseInitialization_sufStats <- function(counts_suf, design,
                                           X, iterOLS=0,
                                           lassoFamily = "gaussian"){
 
-  require(glmnet)
 
   ## initialize mu_tc
   EZ_probOrig <- X / rowSums(X)
@@ -60,10 +59,10 @@ sparseInitialization_sufStats <- function(counts_suf, design,
     mu_gc_scaled <- mu_gc/((X %*% curMu_tc)+1e-10)
     olsX <- t(n_c * (t(X) %*% diag(mu_gc_scaled[,1])))
     if(lassoFamily == "gaussian"){
-      cvfit <- cv.glmnet(olsX, Y_gc, lower.limits=0, intercept=FALSE, alpha=1,
+      cvfit <- glmnet::cv.glmnet(olsX, Y_gc, lower.limits=0, intercept=FALSE, alpha=1,
                          family="gaussian", weights=1/(Y_gc+1), standardize=FALSE)
     } else if(lassoFamily == "poisson"){
-      cvfit <- cv.glmnet(olsX, Y_gc, lower.limits=0, intercept=FALSE, alpha=1,
+      cvfit <- glmnet::cv.glmnet(olsX, Y_gc, lower.limits=0, intercept=FALSE, alpha=1,
                          family="poisson", standardize=FALSE)
     }
     betaHatLasso <- coef(cvfit, s = "lambda.min")[-1,]
@@ -178,27 +177,11 @@ getCellLevelYt_faster <- function(mu_gti, counts){
 }
 
 getPi_gtc_sufStats <- function(mu_gtc, counts, pt=NULL, qSteps=0.01, U=NULL){
-  require(fastmatch)
-  if(!is.null(U)){
-    glm <- TRUE
-    gam <- FALSE
-  }
-  if(!is.null(pt)){
-    glm <- FALSE
-    gam <- TRUE
-  }
-  if(!is.null(pt)){
-    ptGroups <- Hmisc::cut2(pt, cuts = quantile(pt, prob=seq(0,1,by=qSteps)))
-    Xpt <- model.matrix(~0+ptGroups)
-    design <- Xpt
-  }
 
-  if(glm){
-    lvl <- unlist(apply(U,1, function(row){
-      which(row == 1)
-    }))
-    design <- U
-  }
+  lvl <- unlist(apply(U,1, function(row){
+    which(row == 1)
+  }))
+  design <- U
 
   tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
   geneRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 2))
@@ -222,8 +205,8 @@ getPi_gtc_sufStats <- function(mu_gtc, counts, pt=NULL, qSteps=0.01, U=NULL){
 
 ## a faster function using tibble:
 getCellLevelYti_faster_sufStats <- function(mu_gtc, counts, design){
-  require(tibble)
-  tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
+
+    tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
   geneRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 2))
   tfUniq <- unique(tfRows)
   geneUniq <- unique(geneRows)
@@ -231,7 +214,7 @@ getCellLevelYti_faster_sufStats <- function(mu_gtc, counts, design){
     which(row == 1)
   }))
   colnames(mu_gtc) <- paste0("ct",1:ncol(mu_gtc))
-  mu_gtc_tibble <- suppressWarnings(as_tibble(mu_gtc))
+  mu_gtc_tibble <- suppressWarnings(tibble::as_tibble(mu_gtc))
 
   Y_ti <- matrix(0, nrow=length(tfUniq), ncol=ncol(counts),
                  dimnames=list(tfUniq, colnames(counts)))

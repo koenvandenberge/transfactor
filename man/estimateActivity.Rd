@@ -11,6 +11,7 @@ estimateActivity(counts, X, ...)
   counts,
   X,
   U = NULL,
+  model = "poisson",
   alpha = NULL,
   alphaScale = 1,
   maxIter = 500,
@@ -32,6 +33,9 @@ estimateActivity(counts, X, ...)
 \item{...}{parameters including:}
 
 \item{U}{Design matrix, of dimensions n x p.}
+
+\item{model}{The model to use. Options are \code{"poisson"}, \code{"dirMult"},
+and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.}
 
 \item{alpha}{Prior belief in GRN edges.}
 
@@ -61,9 +65,6 @@ Defaults to 0.}
 \item{rho_t}{Thinning factor to account for repressions. \code{NULL} by default.}
 
 \item{sparse}{Logical: should sparse initialization be used?}
-
-\item{model}{The model to use. Options are \code{"poisson"}, \code{"dirMult"},
-and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.}
 }
 \description{
 Estimate TF activity given a gene regulatory network.

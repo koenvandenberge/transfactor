@@ -1,5 +1,4 @@
 
-#' @export
 tfDistanceRanking <- function(emRes,
                               X,
                               counts,
