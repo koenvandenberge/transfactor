@@ -1,3 +1,5 @@
+#' @include utils.R
+
 poissonEstimation <- function(counts,
                               X,
                               rho_t=NULL,
@@ -132,7 +134,6 @@ poissonEstimation <- function(counts,
         mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
       }
     }
-
 
     if(iter == 1){
       llAll <- llAllCur

@@ -1,4 +1,4 @@
-#' @incldue utils.R
+#' @include utils.R
 #' @include activityEstimationFunctions.R
 
 
@@ -7,6 +7,8 @@
 #'
 #' @param counts Gene expression counts of dimensions G x n.
 #' @param X Gene regulatory network of dimensions G x T.
+#' @param model The model to use. Options are \code{"poisson"}, \code{"dirMult"},
+#' and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.
 #' @param U Design matrix, of dimensions n x p.
 #' @param maxIter Maximum number of iterations.
 #' @param plot Logical: should log-likelihood be plotted across iterations?
@@ -53,18 +55,21 @@ setMethod(f = "estimateActivity",
               U <- stats::model.matrix(~ -1 + ict)
             }
 
-            res <- poissonEstimation(counts = counts,
-                                     X = X,
-                                     U = U,
-                                     maxIter = maxIter,
-                                     plot = plot,
-                                     verbose = verbose,
-                                     epsilon = epsilon-2,
-                                     iterOLS = iterOLS,
-                                     lassoFamily = lassoFamily,
-                                     repressions = repressions,
-                                     rho_t = rho_t,
-                                     sparse = sparse)
+            if(model == "poisson"){
+              res <- poissonEstimation(counts = counts,
+                                       X = X,
+                                       U = U,
+                                       maxIter = maxIter,
+                                       plot = plot,
+                                       verbose = verbose,
+                                       epsilon = epsilon-2,
+                                       iterOLS = iterOLS,
+                                       lassoFamily = lassoFamily,
+                                       repressions = repressions,
+                                       rho_t = rho_t,
+                                       sparse = sparse)
+            }
+
             return(res)
 
           }
