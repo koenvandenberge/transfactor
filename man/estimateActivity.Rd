@@ -77,5 +77,9 @@ A list of objects, including
 Estimate TF activity given a gene regulatory network.
 }
 \examples{
-x=2
+counts <- matrix(rpois(n= 1e4, lambda=4), nrow=100, ncol=100)
+X <- matrix(0, nrow=100, ncol=12)
+X[cbind(sample(100, size=250, replace=TRUE), sample(12, size=250, replace=TRUE))] <- 1
+rownames(X) <- rownames(counts) <- paste0("gene",1:100)
+act <- estimateActivity(counts, X)
 }

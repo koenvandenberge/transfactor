@@ -38,7 +38,7 @@ poissonEstimation <- function(counts,
   counts_suf <- counts %*% design
 
   tfNames <- colnames(XPos)
-  ## initialize
+
   ## initialize
   if(sparse){
     mu_tc <- sparseInitialization_sufStats(counts_suf = counts_suf,
@@ -63,18 +63,10 @@ poissonEstimation <- function(counts,
 
   ## incorporate repressions
   if(repressions){
-    # if(!exists("countsRep")){
-    #   rho_tc <- thinningFactor(counts=counts,
-    #                          X=X,
-    #                          U=U,
-    #                          pt=pt,
-    #                          qSteps=qSteps)
-    # } else {
     rho_tc <- thinningFactor(counts=countsRep,
                              dfRepr=dfRepr,
                              X=X,
                              U=U)
-    #}
     rho_tc <- rho_tc[rownames(rho_tc) %in% rownames(mu_tc),]
     mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
   }
@@ -91,16 +83,10 @@ poissonEstimation <- function(counts,
     }
 
     ## E-step: for a gene, select its regulating TFs, and normalize them
-    sumGene <- XPos %*% mu_tc
-    countFracs <- counts_suf / (sumGene+1e-10)
-    zList <- list()
-    for(tt in 1:ncol(XPos)){
-      id <- which(XPos[,tt] == 1)
-      curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
-      rownames(curZ_gtc) <- paste0(tfNames[tt],";",rownames(curZ_gtc)) #tf;gene
-      zList[[tt]] <- curZ_gtc
-    }
-    Z_gtc <- do.call(rbind, zList)
+    Z_gtc <- EStep(XPos = XPos,
+                   mu_tc = mu_tc,
+                   Y_gc = Y_gc,
+                   tfNames = tfNames)
 
     ## M-step: estimate mean for each bin
     mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design))
@@ -299,20 +285,7 @@ dirMultEstimation <- function(counts,
   if(alphaScale == "none"){
     alpha <- XPos
   } else {
-    message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
-    alpha_gtcList <- list()
-    for(cc in 1:ncol(design)){
-      alpha_c <- alpha
-      for(gg in 1:nrow(counts)){
-        curAlpha_gt <- alpha_c[gg,]
-        # if all  positive alpha's are 1, don't change so it reduces back to no prior.
-        if(all(curAlpha_gt[!curAlpha_gt==0] == 1)) next
-        corFactor_g <- alphaScale * (Y_gc[gg,cc]+1) / sum(curAlpha_gt) #+1 to avoid alpha=0
-        scaledAlpha_gt <- curAlpha_gt * corFactor_g
-        alpha_c[gg,] <- scaledAlpha_gt
-      }
-      alpha_gtcList[[cc]] <- alpha_c
-    }
+    alpha_gtcList <- scaleAlpha(XPos, alpha, alphaScale)
   }
 
   tfNames <- colnames(XPos)
@@ -341,19 +314,10 @@ dirMultEstimation <- function(counts,
 
   ## incorporate repressions
   if(repressions){
-    # if(!exists("countsRep")){
-    #   rho_tc <- thinningFactor(counts=counts,
-    #                          X=X,
-    #                          U=U,
-    #                          pt=pt,
-    #                          qSteps=qSteps)
-    # } else {
     rho_tc <- thinningFactor(counts=countsRep,
                              X=X,
                              dfRepr=dfRepr,
                              U=U)
-    #}
-
     rho_tc <- rho_tc[rownames(rho_tc) %in% rownames(mu_tc),]
     mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
   }
@@ -370,16 +334,10 @@ dirMultEstimation <- function(counts,
     }
 
     ## E-step: for a gene, select its regulating TFs, and normalize them
-    sumGene <- XPos %*% mu_tc
-    countFracs <- Y_gc / (sumGene+1e-10)
-    zList <- list()
-    for(tt in 1:ncol(XPos)){
-      id <- which(XPos[,tt] == 1)
-      curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
-      rownames(curZ_gtc) <- paste0(tfNames[tt],";",rownames(curZ_gtc)) #tf;gene
-      zList[[tt]] <- curZ_gtc
-    }
-    Z_gtc <- do.call(rbind, zList)
+    Z_gtc <- EStep(XPos = XPos,
+                   mu_tc = mu_tc,
+                   Y_gc = Y_gc,
+                   tfNames = tfNames)
 
     if(iter == 1){
       alpha_gtc <- matrix(NA, nrow=nrow(Z_gtc), ncol=ncol(design))
@@ -397,7 +355,6 @@ dirMultEstimation <- function(counts,
     }
 
     ## M-step: estimate mean for each bin
-    # mu_gtc <- Z_gtc %*% diag(1/colSums(design)) ## Poisson
     mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design)) + alpha_gtc - 1
     if(any(mu_gtc<0)) mu_gtc[mu_gtc<0] <- 0
 
@@ -437,17 +394,6 @@ dirMultEstimation <- function(counts,
         #   colMeans(mu_gtc[tfid,,drop=FALSE])
         # }))
         # if(ncol(design) == 1) mu_tc <- t(mu_tc)
-        # final Z_gtc
-        sumGene <- XPos %*% mu_tc
-        countFracs <- Y_gc / (sumGene+1e-10)
-        zList <- list()
-        for(tt in 1:ncol(XPos)){
-          id <- which(XPos[,tt] == 1)
-          curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
-          rownames(curZ_gtc) <- paste0(tfNames[tt],";",rownames(curZ_gtc)) #tf;gene
-          zList[[tt]] <- curZ_gtc
-        }
-        Z_gtc <- do.call(rbind, zList)
         # final mu_gtc
         mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design))
         # final mu_tc
@@ -470,17 +416,6 @@ dirMultEstimation <- function(counts,
   #   colMeans(mu_gtc[tfid,,drop=FALSE])
   # }))
   # if(ncol(design) == 1) mu_tc <- t(mu_tc)
-  # final Z_gtc
-  sumGene <- XPos %*% mu_tc
-  countFracs <- Y_gc / (sumGene+1e-10)
-  zList <- list()
-  for(tt in 1:ncol(XPos)){
-    id <- which(XPos[,tt] == 1)
-    curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
-    rownames(curZ_gtc) <- paste0(tfNames[tt],";",rownames(curZ_gtc)) #tf;gene
-    zList[[tt]] <- curZ_gtc
-  }
-  Z_gtc <- do.call(rbind, zList)
   # final mu_gtc
   mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design))
   # final mu_tc
@@ -559,26 +494,8 @@ dirMultEstimationAlpha <- function(counts,
   if(is.null(colnames(XPos))){
     colnames(XPos) <- paste0("tf", 1:ncol(XPos))
   }
-  if(!is.null(U)){
-    glm <- TRUE
-    gam <- FALSE
-  }
-  if(!is.null(pt)){
-    glm <- FALSE
-    gam <- TRUE
-  }
-  if(!is.null(pt)){
-    ptGroups <- Hmisc::cut2(pt, cuts = quantile(pt, prob=seq(0,1,by=qSteps)))
-    Xpt <- model.matrix(~0+ptGroups)
-    design <- Xpt
-  }
 
-  if(glm){
-    lvl <- unlist(apply(U,1, function(row){
-      which(row == 1)
-    }))
-    design <- U
-  }
+  design <- U
 
   ## get sufficient statistics
   Y_gc <- counts %*% design
@@ -587,31 +504,31 @@ dirMultEstimationAlpha <- function(counts,
   if(alphaScale == "none"){
     alpha <- XPos
   } else {
-    message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
-    alpha_gtcList <- list()
-    for(cc in 1:ncol(design)){
-      alpha_c <- alpha
-      for(gg in 1:nrow(counts)){
-        curAlpha_gt <- alpha_c[gg,]
-        # if all  positive alpha's are 1, don't change so it reduces back to no prior.
-        if(all(curAlpha_gt[!curAlpha_gt==0] == 1)) next
-
-        corFactor_g <- alphaScale * (Y_gc[gg,cc]+1) / sum(curAlpha_gt) #+1 to avoid alpha=0
-        scaledAlpha_gt <- curAlpha_gt * corFactor_g
-        alpha_c[gg,] <- scaledAlpha_gt
-      }
-      alpha_gtcList[[cc]] <- alpha_c
-    }
+    alpha_gtcList <- scaleAlpha(XPos, alpha, alphaScale)
   }
 
-
   tfNames <- colnames(XPos)
+
   ## initialize
-  mu_tc <- sparseInitialization_sufStats(counts_suf = Y_gc,
-                                         design = design,
-                                         X = XPos,
-                                         iterOLS = iterOLS,
-                                         lassoFamily = lassoFamily)
+  if(sparse){
+    mu_tc <- sparseInitialization_sufStats(counts_suf = Y_gc,
+                                           design = design,
+                                           X = XPos,
+                                           iterOLS = iterOLS,
+                                           lassoFamily = lassoFamily)
+  } else {
+    # initialize E(Z)
+    EZ_probOrig <- XPos / rowSums(XPos)
+    ### note that this is the mean across all genes a TF is regulating.
+    ### we could consider other properties
+    mu_tc <- matrix(NA, nrow=ncol(XPos), ncol=ncol(design))
+    for(tt in 1:ncol(XPos)){
+      weights <- EZ_probOrig[,tt]
+      hlp <- weights * Y_gc
+      mu_tc[tt,] <- colMeans(hlp[weights > 0,,drop=FALSE])
+    }
+    rownames(mu_tc) <- colnames(XPos)
+  }
 
   ## incorporate repressions
   if(repressions){
@@ -635,16 +552,10 @@ dirMultEstimationAlpha <- function(counts,
     }
 
     ## E-step: for a gene, select its regulating TFs, and normalize them
-    sumGene <- XPos %*% mu_tc
-    countFracs <- Y_gc / (sumGene+1e-10)
-    zList <- list()
-    for(tt in 1:ncol(XPos)){
-      id <- which(XPos[,tt] == 1)
-      curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
-      rownames(curZ_gtc) <- paste0(tfNames[tt],";",rownames(curZ_gtc)) #tf;gene
-      zList[[tt]] <- curZ_gtc
-    }
-    Z_gtc <- do.call(rbind, zList)
+    Z_gtc <- EStep(XPos = XPos,
+                   mu_tc = mu_tc,
+                   Y_gc = Y_gc,
+                   tfNames = tfNames)
 
     # if(iter == 1){
     # get right structure
@@ -679,7 +590,6 @@ dirMultEstimationAlpha <- function(counts,
     # mu_gtc <- Z_gtc %*% diag(1/colSums(design)) ## Poisson
     mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design)) + alpha_gtc - 1
     if(any(mu_gtc<0)) mu_gtc[mu_gtc<0] <- 0
-
 
     ## update mu_tc
     tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
@@ -756,7 +666,6 @@ dirMultEstimationAlpha <- function(counts,
     ## incorporate thinning factor
     if(repressions) mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
 
-
     ## log-likelihood (this actually takes quite some time...)
     llAllCur <- sum(log(dpois(x=round(Z_gtc), lambda=mu_gtc)+1e-16))
 
@@ -789,7 +698,9 @@ dirMultEstimationAlpha <- function(counts,
     }
   }
 
+  # final mu_gtc
   mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design))
+  # final mu_tc
   mu_tc <- t(sapply(unique(tfNames), function(curTF){
     tfid <- which(tfRows == curTF)
     colMeans(mu_gtc[tfid,,drop=FALSE])

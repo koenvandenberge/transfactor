@@ -174,6 +174,38 @@ pruneRepressingLinks <- function(counts, X){
               dfRepr = dfRepr))
 }
 
+scaleAlpha <- function(XPos, alpha, alphaScale){
+  message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
+  alpha_gtcList <- list()
+  for(cc in 1:ncol(design)){
+    alpha_c <- alpha
+    for(gg in 1:nrow(counts)){
+      curAlpha_gt <- alpha_c[gg,]
+      # if all  positive alpha's are 1, don't change so it reduces back to no prior.
+      if(all(curAlpha_gt[!curAlpha_gt==0] == 1)) next
+      corFactor_g <- alphaScale * (Y_gc[gg,cc]+1) / sum(curAlpha_gt) #+1 to avoid alpha=0
+      scaledAlpha_gt <- curAlpha_gt * corFactor_g
+      alpha_c[gg,] <- scaledAlpha_gt
+    }
+    alpha_gtcList[[cc]] <- alpha_c
+  }
+  return(alpha_gtcList)
+}
+
+EStep <- function(XPos, mu_tc, Y_gc, tfNames){
+  sumGene <- XPos %*% mu_tc
+  countFracs <- Y_gc / (sumGene+1e-10)
+  zList <- list()
+  for(tt in 1:ncol(XPos)){
+    id <- which(XPos[,tt] == 1)
+    curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
+    rownames(curZ_gtc) <- paste0(tfNames[tt],";",rownames(curZ_gtc)) #tf;gene
+    zList[[tt]] <- curZ_gtc
+  }
+  Z_gtc <- do.call(rbind, zList)
+  return(Z_gtc)
+}
+
 
 getCellLevelYt_faster <- function(mu_gti, counts){
   tfRows <- unlist(lapply(strsplit(rownames(mu_gti), split=";"), "[[", 1))
