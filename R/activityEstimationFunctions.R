@@ -85,7 +85,7 @@ poissonEstimation <- function(counts,
     ## E-step: for a gene, select its regulating TFs, and normalize them
     Z_gtc <- EStep(XPos = XPos,
                    mu_tc = mu_tc,
-                   Y_gc = Y_gc,
+                   Y_gc = counts_suf,
                    tfNames = tfNames)
 
     ## M-step: estimate mean for each bin
