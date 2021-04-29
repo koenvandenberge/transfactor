@@ -74,27 +74,11 @@ sparseInitialization_sufStats <- function(counts_suf, design,
 
 thinningFactor <- function(counts,
                            X,
-                           U=NULL){
+                           dfRepr,
+                           U){
 
   ## Deleted checks on X rownames and counts rownames
   ## Deleted sorting of counts based on X
-
-  ## only keep repressions between TFs
-  tfsInTargets <- colnames(X)[colnames(X) %in% rownames(X)]
-  tfTargetRowId <- rownames(X) %in% tfsInTargets
-  XNoTf <- X[!tfTargetRowId,]
-  XNoTf[XNoTf == -1] <- 0
-  if(any(rowSums(XNoTf) == 0)){
-    message("Pruning ", sum(rowSums(XNoTf) == 0), " genes with only between-gene repressions.")
-    pruneId <- rownames(XNoTf)[which(rowSums(XNoTf) == 0)]
-    XNoTf <- XNoTf[!rownames(XNoTf) %in% pruneId,]
-    X <- X[!rownames(X) %in% pruneId,]
-  }
-  X[rownames(XNoTf),] <- XNoTf
-  # now get all the repressions between TFs
-  reprId <- arrayhelpers::vec2array(which(X==-1), dim(X))
-  dfRepr <- data.frame(repressed=rownames(X)[reprId[,1]],
-                       repressor=colnames(X)[reprId[,2]])
   repressedTFs <- as.character(unique(dfRepr$repressed))
 
   # design of experiment
@@ -155,6 +139,39 @@ thinningFactor <- function(counts,
     rho_tc[rr,] <- curRho
   }
   return(rho_tc)
+}
+
+pruneRepressingLinks <- function(counts, X){
+  ## only keep repressions between TFs
+  tfsInTargets <- colnames(X)[colnames(X) %in% rownames(X)]
+  tfTargetRowId <- rownames(X) %in% tfsInTargets
+  XNoTf <- X[!tfTargetRowId,]
+  XNoTf[XNoTf == -1] <- 0
+  if(any(rowSums(XNoTf) == 0)){
+    message("Pruning ", sum(rowSums(XNoTf) == 0), " genes with only between-gene repressions.")
+    pruneId <- rownames(XNoTf)[which(rowSums(XNoTf) == 0)]
+    countsRep <- counts # for repressions (thinningFactor function)
+    counts <- counts[!rownames(counts) %in% pruneId,]
+    XNoTf <- XNoTf[!rownames(XNoTf) %in% pruneId,]
+    X <- X[!rownames(X) %in% pruneId,]
+  } else {
+    countsRep <- counts
+  }
+  X[rownames(XNoTf),] <- XNoTf
+  # now get all the repressions between TFs
+  reprId <- arrayhelpers::vec2array(which(X==-1), dim(X))
+  dfRepr <- data.frame(repressed=rownames(X)[reprId[,1]],
+                       repressor=colnames(X)[reprId[,2]])
+  # and finally make a GRN where repressions are set to zero.
+  XPos <- X
+  XPos[XPos == -1] <- 0
+  keep <- rownames(XPos)[rowSums(XPos)>0]
+  counts <- counts[keep,]
+  XPos <- XPos[keep,]
+  XPos <- XPos[,colSums(XPos)>0]
+  return(list(XPos = XPos,
+              countsRep = countsRep,
+              dfRepr = dfRepr))
 }
 
 

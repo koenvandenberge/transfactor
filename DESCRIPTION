@@ -1,6 +1,6 @@
 Package: transfactor
 Title: Transcription factor activity estimator
-Version: 0.99.0
+Version: 0.99.01
 Date: 2021-04-21
 Authors@R: 
     person(given = "Koen",

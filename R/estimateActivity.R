@@ -32,7 +32,11 @@
 #'  - mu_tc: TF activity for each TF t in each group c (as defined by columns in U).
 #'  - mu_gtc: The expected number of molecules for gene g produced by TF t in group c.
 #' @examples
-#' x=2
+#' counts <- matrix(rpois(n= 1e4, lambda=4), nrow=100, ncol=100)
+#' X <- matrix(0, nrow=100, ncol=12)
+#' X[cbind(sample(100, size=250, replace=TRUE), sample(12, size=250, replace=TRUE))] <- 1
+#' rownames(X) <- rownames(counts) <- paste0("gene",1:100)
+#' act <- estimateActivity(counts, X)
 #' @export
 #' @rdname estimateActivity
 #' @import SingleCellExperiment
@@ -54,6 +58,21 @@ setMethod(f = "estimateActivity",
                                 repressions = TRUE,
                                 rho_t = NULL,
                                 sparse = TRUE){
+## for dev:
+# U = NULL
+# model = "poisson"
+# alpha = NULL
+# alphaScale = 1
+# maxIter = 500
+# plot = FALSE
+# verbose = FALSE
+# epsilon = 1e-2
+# iterOLS = 0
+# lassoFamily = "gaussian"
+# repressions = TRUE
+# rho_t = NULL
+# sparse = TRUE
+
 
             # TODO: restrict range on alpha (lower bound)?
 
@@ -64,12 +83,32 @@ setMethod(f = "estimateActivity",
             if(is.null(colnames(X))){
               colnames(X) <- paste0("tf", 1:ncol(X))
             }
+            if(any(rowSums(abs(X)) == 0)){
+              noLinkGenes <- which(rowSums(abs(X)) == 0)
+              message("Removing ", length(noLinkGenes), " genes from the GRN",
+                      " without any links.")
+              X <- X[-noLinkGenes,]
+            }
+            if(any(colSums(abs(X)) == 0)){
+              noLinkTFs <- which(colSums(abs(X)) == 0)
+              message("Removing ", length(noLinkTFs), "TFs from the GRN",
+                      " without any links.")
+              X <- X[,-noLinkTFs]
+            }
 
             ## checks on U
             if(is.null(U)){
               message("No design matrix provided. Working with intercept only.")
               ict <- rep(1, length = ncol(counts))
               U <- stats::model.matrix(~ -1 + ict)
+            }
+
+            ## checks on arguments
+            if(repressions){
+              if(!any(X == -1)){
+                message("No repressions in the GRN. Setting repressions to FALSE.")
+              }
+              repressions <- FALSE
             }
 
             if(model == "poisson"){
@@ -79,7 +118,7 @@ setMethod(f = "estimateActivity",
                                        maxIter = maxIter,
                                        plot = plot,
                                        verbose = verbose,
-                                       epsilon = epsilon-2,
+                                       epsilon = epsilon,
                                        iterOLS = iterOLS,
                                        lassoFamily = lassoFamily,
                                        repressions = repressions,
@@ -94,7 +133,7 @@ setMethod(f = "estimateActivity",
                                        maxIter = maxIter,
                                        plot = plot,
                                        verbose = verbose,
-                                       epsilon = epsilon-2,
+                                       epsilon = epsilon,
                                        iterOLS = iterOLS,
                                        lassoFamily = lassoFamily,
                                        repressions = repressions,
