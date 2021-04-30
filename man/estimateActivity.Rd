@@ -32,7 +32,8 @@ estimateActivity(counts, X, ...)
 
 \item{...}{parameters including:}
 
-\item{U}{Design matrix, of dimensions n x p.}
+\item{U}{Design matrix, of dimensions n x p. The design matrix should not
+contain an intercept.}
 
 \item{model}{The model to use. Options are \code{"poisson"}, \code{"dirMult"},
 and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.}

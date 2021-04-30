@@ -236,36 +236,3 @@ getPi_gtc_sufStats <- function(mu_gtc, counts, pt=NULL, qSteps=0.01, U=NULL){
 }
 
 
-## a faster function using tibble:
-tfCounts <- function(mu_gtc, counts, design=NULL){
-
-  if(is.null(design)){
-    message("No design matrix provided. Working with intercept only.")
-    ict <- rep(1, length = ncol(counts))
-    design <- stats::model.matrix(~ -1 + ict)
-  }
-
-  tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
-  geneRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 2))
-  tfUniq <- unique(tfRows)
-  geneUniq <- unique(geneRows)
-  lvl <- unlist(apply(design,1, function(row){
-    which(row == 1)
-  }))
-  colnames(mu_gtc) <- paste0("ct",1:ncol(mu_gtc))
-  mu_gtc_tibble <- suppressWarnings(tibble::as_tibble(mu_gtc))
-
-  Y_ti <- matrix(0, nrow=length(tfUniq), ncol=ncol(counts),
-                 dimnames=list(tfUniq, colnames(counts)))
-  for(gg in 1:length(geneUniq)){
-    curGene <- geneUniq[gg]
-    id <- which(geneRows == curGene)
-    curTFs <- tfRows[id]
-    curMu <- as.matrix(mu_gtc_tibble[id,1:ncol(design)])
-    #curMu <- mu_gtc[paste0(curTFs,";",curGene),,drop=FALSE]
-    curProbs <- sweep(curMu, 2, colSums(curMu)+1e-10, "/")
-    curProbs <- curProbs[,lvl,drop=FALSE]
-    Y_ti[curTFs,] <- Y_ti[curTFs,] + sweep(curProbs, 2, counts[curGene,], "*")
-  }
-  return(Y_ti)
-}

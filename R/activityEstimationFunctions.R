@@ -637,7 +637,7 @@ dirMultEstimationAlpha <- function(counts,
       }
       # reset where necessary
       alpha[alpha<0] <- 0
-      alpha[alpha > max(alpharange)] <- max(alpharange)
+      # alpha[alpha > max(alpharange)] <- max(alpharange)
       alpha[is.infinite(alpha)] <- max(alpharange)
       # alpha[alpha < 1 & alpha > 0] <- 1
       # alpha[alpha > 1e4] <- 100

@@ -1,6 +1,6 @@
 Package: transfactor
 Title: Transcription factor activity estimator
-Version: 0.99.02
+Version: 0.99.03
 Date: 2021-04-21
 Authors@R: 
     person(given = "Koen",
@@ -44,4 +44,5 @@ Collate:
     'activityEstimationFunctions.R'
     'allGenerics.R'
     'estimateActivity.R'
+    'tfCounts.R'
     'tfDistance.R'

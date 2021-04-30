@@ -9,7 +9,8 @@
 #' @param X Gene regulatory network of dimensions G x T.
 #' @param model The model to use. Options are \code{"poisson"}, \code{"dirMult"},
 #' and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.
-#' @param U Design matrix, of dimensions n x p.
+#' @param U Design matrix, of dimensions n x p. The design matrix should not
+#' contain an intercept.
 #' @param alpha Prior belief in GRN edges.
 #' @param alphaScale Scaling factor to tune the belief of the prior versus the
 #' observed dataset. Setting \code{alphaScale=1} (the default) means assuming equal belief to
@@ -107,8 +108,8 @@ setMethod(f = "estimateActivity",
             if(repressions){
               if(!any(X == -1)){
                 message("No repressions in the GRN. Setting repressions to FALSE.")
+                repressions <- FALSE
               }
-              repressions <- FALSE
             }
 
             if(model == "poisson"){
