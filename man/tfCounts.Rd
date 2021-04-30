@@ -3,8 +3,7 @@
 \name{tfCounts}
 \alias{tfCounts}
 \alias{tfCounts,matrix,matrix-method}
-\title{tfCounts
-#' @param ... parameters including:}
+\title{tfCounts}
 \usage{
 tfCounts(mu_gtc = "matrix", counts = "matrix", ...)
 
@@ -14,6 +13,8 @@ tfCounts(mu_gtc = "matrix", counts = "matrix", ...)
 \item{mu_gtc}{Output from estimateActivity.}
 
 \item{counts}{Gene expression counts.}
+
+\item{...}{parameters including:}
 
 \item{design}{Design matrix.}
 }

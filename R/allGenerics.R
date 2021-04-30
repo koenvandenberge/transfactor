@@ -13,7 +13,7 @@ setGeneric(
 #' @export
 #' @name tfCounts
 #' @title tfCounts
-#' #' @param ... parameters including:
+#' @param ... parameters including:
 setGeneric(
   name = "tfCounts",
   def = function(mu_gtc = "matrix",
