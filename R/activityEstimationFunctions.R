@@ -273,9 +273,6 @@ dirMultEstimation <- function(counts,
   }
 
   # get design groups
-  lvl <- unlist(apply(U,1, function(row){
-    which(row == 1)
-  }))
   design <- U
 
   ## get sufficient statistics
@@ -285,7 +282,7 @@ dirMultEstimation <- function(counts,
   if(alphaScale == "none"){
     alpha <- XPos
   } else {
-    alpha_gtcList <- scaleAlpha(XPos, alpha, alphaScale)
+    alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
   }
 
   tfNames <- colnames(XPos)
@@ -344,7 +341,7 @@ dirMultEstimation <- function(counts,
       if(alphaScale == "none"){ # no effect of alpha => Poisson model
         alpha_gtc[] <- 1
       } else {
-        for(cc in 1:ncol(design)){
+        for(cc in seq_len(ncol(design))){
           alpha_gt <- Z_gtc
           tfIk <- unlist(lapply(strsplit(rownames(Z_gtc), split=";"), "[[", 1))
           geneIk <- unlist(lapply(strsplit(rownames(Z_gtc), split=";"), "[[", 2))
@@ -504,7 +501,8 @@ dirMultEstimationAlpha <- function(counts,
   if(alphaScale == "none"){
     alpha <- XPos
   } else {
-    alpha_gtcList <- scaleAlpha(XPos, alpha, alphaScale)
+    alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
+    alpharange <- range(alpha_gtcList)
   }
 
   tfNames <- colnames(XPos)
@@ -601,7 +599,7 @@ dirMultEstimationAlpha <- function(counts,
 
 
     ### M-step II: estimate alpha_gt
-    ## TODO: faster way:?? gg=383
+    ## TODO: faster way?
     for(gg in 1:nrow(XPos)){
       idTF <- which(XPos[gg,] == 1)
       if(length(idTF) == 1) next
@@ -638,6 +636,8 @@ dirMultEstimationAlpha <- function(counts,
     }
     # reset where necessary
     alpha[alpha<0] <- 0
+    alpha[alpha > max(alpharange)] <- max(alpharange)
+    alpha[is.infinite(alpha)] <- max(alpharange)
     # alpha[alpha < 1 & alpha > 0] <- 1
     # alpha[alpha > 1e4] <- 100
 
@@ -646,21 +646,7 @@ dirMultEstimationAlpha <- function(counts,
     if(alphaScale == "none"){
       alpha <- XPos
     } else {
-      message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
-      alpha_gtcList <- list()
-      for(cc in 1:ncol(design)){
-        alpha_c <- alpha
-        for(gg in 1:nrow(counts)){
-          curAlpha_gt <- alpha_c[gg,]
-          # if all  positive alpha's are 1, don't change so it reduces back to no prior.
-          if(all(curAlpha_gt[!curAlpha_gt==0] == 1)) next
-
-          corFactor_g <- alphaScale * (Y_gc[gg,cc]+1) / sum(curAlpha_gt) #+1 to avoid alpha=0
-          scaledAlpha_gt <- curAlpha_gt * corFactor_g
-          alpha_c[gg,] <- scaledAlpha_gt
-        }
-        alpha_gtcList[[cc]] <- alpha_c
-      }
+      alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
     }
 
     ## incorporate thinning factor

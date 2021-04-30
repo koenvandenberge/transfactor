@@ -174,12 +174,12 @@ pruneRepressingLinks <- function(counts, X){
               dfRepr = dfRepr))
 }
 
-scaleAlpha <- function(XPos, alpha, alphaScale){
+scaleAlpha <- function(Y_gc, XPos, alpha, alphaScale, design){
   message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
   alpha_gtcList <- list()
   for(cc in 1:ncol(design)){
     alpha_c <- alpha
-    for(gg in 1:nrow(counts)){
+    for(gg in 1:nrow(alpha)){
       curAlpha_gt <- alpha_c[gg,]
       # if all  positive alpha's are 1, don't change so it reduces back to no prior.
       if(all(curAlpha_gt[!curAlpha_gt==0] == 1)) next
@@ -207,23 +207,7 @@ EStep <- function(XPos, mu_tc, Y_gc, tfNames){
 }
 
 
-getCellLevelYt_faster <- function(mu_gti, counts){
-  tfRows <- unlist(lapply(strsplit(rownames(mu_gti), split=";"), "[[", 1))
-  geneRows <- unlist(lapply(strsplit(rownames(mu_gti), split=";"), "[[", 2))
-  tfUniq <- unique(tfRows)
-  geneUniq <- unique(geneRows)
-  Yt <- matrix(0, nrow=length(tfUniq), ncol=ncol(counts),
-               dimnames=list(tfUniq, colnames(counts)))
-  for(gg in 1:length(geneUniq)){
-    curGene <- geneUniq[gg]
-    id <- which(geneRows == curGene)
-    curTFs <- tfRows[id]
-    curMu <- mu_gti[paste0(curTFs,";",curGene),,drop=FALSE]
-    curProbs <- sweep(curMu, 2, colSums(curMu)+1e-10, "/")
-    Yt[curTFs,] <- Yt[curTFs,] + sweep(curProbs, 2, counts[curGene,], "*")
-  }
-  return(Yt)
-}
+
 
 getPi_gtc_sufStats <- function(mu_gtc, counts, pt=NULL, qSteps=0.01, U=NULL){
 
@@ -253,9 +237,15 @@ getPi_gtc_sufStats <- function(mu_gtc, counts, pt=NULL, qSteps=0.01, U=NULL){
 
 
 ## a faster function using tibble:
-getCellLevelYti_faster_sufStats <- function(mu_gtc, counts, design){
+tfCounts <- function(mu_gtc, counts, design=NULL){
 
-    tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
+  if(is.null(design)){
+    message("No design matrix provided. Working with intercept only.")
+    ict <- rep(1, length = ncol(counts))
+    design <- stats::model.matrix(~ -1 + ict)
+  }
+
+  tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
   geneRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 2))
   tfUniq <- unique(tfRows)
   geneUniq <- unique(geneRows)
