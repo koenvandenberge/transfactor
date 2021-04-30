@@ -246,6 +246,7 @@ dirMultEstimation <- function(counts,
   }
 
   counts <- counts[rownames(XPos),]
+  alpha <- alpha[rownames(XPos),]
 
   ## checks on alpha
   alpha <- alpha[rownames(XPos), colnames(XPos)]
@@ -457,7 +458,6 @@ dirMultEstimationAlpha <- function(counts,
   #       the prior as much as we believe the dat. alphaScale=1/2 means we believe the prior
   #       half of what we believe the data.
 
-  if(is.null(alpha)) alpha <- X
 
   ## checks on X
   if(is.null(rownames(X))){
@@ -467,8 +467,10 @@ dirMultEstimationAlpha <- function(counts,
   if(!all(rownames(X) %in% rownames(counts))){
     stop("Not all gene names in X are present in counts.")
   }
-  if(!all(alpha[X==0] == 0)){
-    stop("alpha_gt cannot be positive if there is no edge in the GRN.")
+  if(!is.null(alpha)){
+    if(!all(alpha[X==0] == 0)){
+      stop("alpha_gt cannot be positive if there is no edge in the GRN.")
+    }
   }
 
   counts <- counts[rownames(X),]
@@ -478,15 +480,18 @@ dirMultEstimationAlpha <- function(counts,
     XPos <- pruned$XPos
     countsRep <- pruned$countsRep
     dfRepr <- pruned$dfRepr
+    if(is.null(alpha)) alpha <- XPos
   } else {
     if(any(X == -1)){
       stop("Repressing links are present in GRN, but repressions is set to FALSE.")
     }
     XPos <- X
     countsRep <- counts
+    if(is.null(alpha)) alpha <- XPos
   }
 
   counts <- counts[rownames(XPos),]
+  alpha <- alpha[rownames(XPos),]
 
   if(is.null(colnames(XPos))){
     colnames(XPos) <- paste0("tf", 1:ncol(XPos))
