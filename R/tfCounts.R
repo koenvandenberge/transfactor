@@ -28,6 +28,10 @@ setMethod(f = "tfCounts",
     design <- stats::model.matrix(~ -1 + ict)
   }
 
+  if(nrow(design) != ncol(counts)){
+    stop("Dimensions of design matrix and count matrix don't match.")
+  }
+
   tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
   geneRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 2))
   tfUniq <- unique(tfRows)

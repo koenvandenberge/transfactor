@@ -37,7 +37,9 @@
 #' X <- matrix(0, nrow=100, ncol=12)
 #' X[cbind(sample(100, size=250, replace=TRUE), sample(12, size=250, replace=TRUE))] <- 1
 #' rownames(X) <- rownames(counts) <- paste0("gene",1:100)
-#' act <- estimateActivity(counts, X)
+#' cellType <- factor(rep(c("a", "b"), each=50))
+#' U <- model.matrix(~ -1 + cellType)
+#' act <- estimateActivity(counts, X, U=U)
 #' @export
 #' @rdname estimateActivity
 #' @import SingleCellExperiment
