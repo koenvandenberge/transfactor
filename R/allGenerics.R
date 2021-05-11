@@ -22,3 +22,22 @@ setGeneric(
     standardGeneric("tfCounts")
   }
 )
+
+#' @export
+#' @name tfDistance
+#' @title tfDistance
+#' @param ... parameters including:
+setGeneric(
+  name = "tfDistance",
+  signature = c('activity',
+                'X',
+                'counts',
+                'U'),
+  def = function(activity = "list",
+                 X = "matrix",
+                 counts = "matrix",
+                 U = "matrix",
+                 ...) {
+    standardGeneric("tfDistance")
+  }
+)

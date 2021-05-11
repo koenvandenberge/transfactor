@@ -102,18 +102,23 @@
 #' cellType <- factor(rep(c("a", "b"), each=50))
 #' U <- model.matrix(~ -1 + cellType)
 #' act <- estimateActivity(counts, X, U=U)
-#' tfDist <- tfDistanceRanking(act, X, counts, U)
+#' tfDist <- tfDistance(act, X, counts, U)
 #' @export
-#' @rdname tfDistanceRanking
-tfDistanceRanking <- function(activity,
-                              X,
-                              counts,
-                              U,
-                              cellGroups=NULL,
-                              distance="Euclidean",
-                              scaleDistance=FALSE,
-                              contrast="consecutive",
-                              referenceGroup=NULL){
+#' @rdname tfDistance
+setMethod(f = "tfDistance",
+          signature = c(activity = "list",
+                        counts = "matrix",
+                        X = "matrix",
+                        U = "matrix"),
+          definition = function(activity,
+                       X,
+                       counts,
+                       U,
+                       cellGroups=NULL,
+                       distance="Euclidean",
+                       scaleDistance=FALSE,
+                       contrast="consecutive",
+                       referenceGroup=NULL){
 
   if(is.null(colnames(X))){
     colnames(X) <- paste0("tf",1:ncol(X))
@@ -228,3 +233,4 @@ tfDistanceRanking <- function(activity,
 
   return(tfDist)
 }
+)

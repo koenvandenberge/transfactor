@@ -2,6 +2,8 @@
 
 export(estimateActivity)
 export(tfCounts)
+export(tfDistance)
 exportMethods(estimateActivity)
 exportMethods(tfCounts)
+exportMethods(tfDistance)
 import(SingleCellExperiment)
