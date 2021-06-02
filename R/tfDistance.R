@@ -82,8 +82,13 @@
 #' contain an intercept. This is the same design matrix provided to \code{\link{estimateActivity}}.
 #' @param cellGroups The columns of \code{U} to be compared, if a pairwise
 #' comparison of sets of cells is of interest.
-#' @param distance The distance function to use. Options are \code{"Euclidean"}
-#' or \code{"L1"}. Defaults to \code{"Euclidean"}.
+#' @param distance The distance function to use. Defaults to \code{"Euclidean"}.
+#' Options are
+#'  - \code{"Euclidean"}: Euclidean distance on mu_gtc.
+#'  - \code{"L1"}: L1 distance on mu_gtc.
+#'  - \code{"EuclideanTF"}: Euclidean distance on mu_tc.
+#'  - \code{"L1TF"}: L1 distance on mu_tc.
+#'  - \code{"rank"}: Difference of ranks on mu_tc.
 #' @param scaleDistance Logical. Should the distances be scaled?
 #' @param contrast The contrast of interest. If \code{"consecutive"},
 #' it tests each group versus the next (relevant for datasets with trajectories),

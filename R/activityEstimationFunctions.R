@@ -183,10 +183,15 @@ poissonEstimation <- function(counts,
   #   tfid <- which(tfRows == curTF)
   #   colMeans(mu_gtc[tfid,,drop=FALSE])
   # }))
-  return(list(mu_tc=mu_tc,
-              mu_gtc=mu_gtc,
-              countsSufStats = counts_suf,
-              design = design))
+  if(maxIter == 0){
+    return(list(mu_tc=mu_tc,
+                design = design))
+  } else {
+    return(list(mu_tc=mu_tc,
+                mu_gtc=mu_gtc,
+                countsSufStats = counts_suf,
+                design = design))
+  }
 }
 
 
