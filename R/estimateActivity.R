@@ -80,6 +80,9 @@ setMethod(f = "estimateActivity",
             # TODO: restrict range on alpha (lower bound)?
 
             ## checks on X
+            if(is.null(rownames(X)) | is.null(rownames(counts))){
+              stop("Please ensure rownames for both X and counts.")
+            }
             if(!all(rownames(X) %in% rownames(counts))){
               stop("Not all genes in X are in the count matrix.")
             }
