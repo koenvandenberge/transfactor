@@ -69,6 +69,7 @@ poissonEstimation <- function(counts,
                              U=U)
     rho_tc <- rho_tc[rownames(rho_tc) %in% rownames(mu_tc),]
     mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
+    if(is.null(rho_tc)) repressions <- FALSE
   }
 
   iter <- 0
@@ -323,6 +324,7 @@ dirMultEstimation <- function(counts,
                              U=U)
     rho_tc <- rho_tc[rownames(rho_tc) %in% rownames(mu_tc),]
     mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
+    if(is.null(rho_tc)) repressions <- FALSE
   }
 
   iter <- 0
@@ -546,6 +548,7 @@ dirMultEstimationAlpha <- function(counts,
                              dfRepr=dfRepr)
     rho_tc <- rho_tc[rownames(rho_tc) %in% rownames(mu_tc),]
     mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
+    if(is.null(rho_tc)) repressions <- FALSE
   }
 
   iter <- 0

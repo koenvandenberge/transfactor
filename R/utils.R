@@ -80,6 +80,11 @@ thinningFactor <- function(counts,
   ## Deleted checks on X rownames and counts rownames
   ## Deleted sorting of counts based on X
   repressedTFs <- as.character(unique(dfRepr$repressed))
+  if(length(repressedTFs) == 0){
+    message("No between-TF repressions present in the GRN.\n")
+    rho_tc <- NULL
+    return(rho_tc)
+  }
 
   # design of experiment
   C <- ncol(U)

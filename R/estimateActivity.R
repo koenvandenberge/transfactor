@@ -8,7 +8,7 @@
 #' @param counts Gene expression counts of dimensions G x n.
 #' @param X Gene regulatory network of dimensions G x T.
 #' @param model The model to use. Options are \code{"poisson"}, \code{"dirMult"},
-#' and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.
+#' and \code{"dirMultEmpBayes"} (not recommended). Defaults to \code{"poisson"}.
 #' @param U Design matrix, of dimensions n x p. The design matrix should not
 #' contain an intercept.
 #' @param alpha Prior belief in GRN edges.
@@ -57,10 +57,10 @@ setMethod(f = "estimateActivity",
                                 verbose = FALSE,
                                 epsilon = 1e-2,
                                 iterOLS = 0,
+                                sparse = TRUE,
                                 lassoFamily = "gaussian",
                                 repressions = TRUE,
-                                rho_t = NULL,
-                                sparse = TRUE){
+                                rho_t = NULL){
 ## for dev:
 # U = NULL
 # model = "poisson"
