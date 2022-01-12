@@ -19,10 +19,10 @@ estimateActivity(counts, X, ...)
   verbose = FALSE,
   epsilon = 0.01,
   iterOLS = 0,
+  sparse = TRUE,
   lassoFamily = "gaussian",
   repressions = TRUE,
-  rho_t = NULL,
-  sparse = TRUE
+  rho_t = NULL
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ estimateActivity(counts, X, ...)
 contain an intercept.}
 
 \item{model}{The model to use. Options are \code{"poisson"}, \code{"dirMult"},
-and \code{"dirMultEmpBayes"}. Defaults to \code{"poisson"}.}
+and \code{"dirMultEmpBayes"} (not recommended). Defaults to \code{"poisson"}.}
 
 \item{alpha}{Prior belief in GRN edges.}
 
@@ -59,13 +59,13 @@ calculation for mu_gtc, many will be negative and will hence be reset to zero.}
 \item{iterOLS}{Number of OLS iterations to use to set up sparse initialization.
 Defaults to 0.}
 
+\item{sparse}{Logical: should sparse initialization be used?}
+
 \item{lassoFamily}{The family for the sparse initialization. Defaults to \code{"gaussian"}.}
 
 \item{repressions}{Logical: should repressions be taken into account?}
 
 \item{rho_t}{Thinning factor to account for repressions. \code{NULL} by default.}
-
-\item{sparse}{Logical: should sparse initialization be used?}
 }
 \value{
 A list of objects, including

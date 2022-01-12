@@ -40,8 +40,15 @@ contain an intercept. This is the same design matrix provided to \code{\link{est
 \item{cellGroups}{The columns of \code{U} to be compared, if a pairwise
 comparison of sets of cells is of interest.}
 
-\item{distance}{The distance function to use. Options are \code{"Euclidean"}
-or \code{"L1"}. Defaults to \code{"Euclidean"}.}
+\item{distance}{The distance function to use. Defaults to \code{"Euclidean"}.
+Options are
+\itemize{
+\item \code{"Euclidean"}: Euclidean distance on mu_gtc.
+\item \code{"L1"}: L1 distance on mu_gtc.
+\item \code{"EuclideanTF"}: Euclidean distance on mu_tc.
+\item \code{"L1TF"}: L1 distance on mu_tc.
+\item \code{"rank"}: Difference of ranks on mu_tc.
+}}
 
 \item{scaleDistance}{Logical. Should the distances be scaled?}
 
