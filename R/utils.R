@@ -73,9 +73,9 @@ sparseInitialization_sufStats <- function(counts_suf, design,
 }
 
 thinningFactor <- function(counts,
-                           X,
-                           dfRepr,
-                           U){
+                            X,
+                            dfRepr,
+                            U){
 
   ## Deleted checks on X rownames and counts rownames
   ## Deleted sorting of counts based on X
@@ -95,8 +95,6 @@ thinningFactor <- function(counts,
                    ncol=ncol(U))
   dimnames(rho_tc) <- list(repressedTFs, colnames(U))
 
-  logOffset <- log(colSums(counts) * edgeR::calcNormFactors(counts))
-
   for(rr in 1:length(repressedTFs)){
     curTF <- as.character(repressedTFs[rr])
     repressingTFs <- as.character(dfRepr$repressor[dfRepr$repressed == curTF])
@@ -106,8 +104,7 @@ thinningFactor <- function(counts,
     logX <- log1p(yRepressor)
     y <- counts[curTF,]+1
     ## power law model: Poisson
-    # mp <- glm(y ~ logX, family="poisson", offset = logOffset)
-    mp <- glm(y ~ logX + offset(logOffset), family="poisson")
+    mp <- glm(y ~ logX, family="poisson")
     # plot(x=logX, y=log(y) - logOffset)
     # summary(mp)
     # if X is all zero
@@ -123,11 +120,7 @@ thinningFactor <- function(counts,
       next
     }
     grid <- seq(min(logX), max(logX), length=100)
-    yhat <- predict(mp, newdata=data.frame(logX=grid,
-                                           logOffset = mean(logOffset)))
-    # plot: y axis is normalized log count brought back to same library size.
-    # plot(x=exp(logX)-1, y=log(y) - logOffset + mean(logOffset))
-    # lines(x=exp(grid)-1, y=yhat, col="red", lwd=2)
+    yhat <- predict(mp, newdata=data.frame(logX=grid))
     ## calculate thinning factor rho_tc
     ### X for each cell type
     colsumU <- colSums(U)
@@ -135,12 +128,9 @@ thinningFactor <- function(counts,
                                                   nrow=length(colsumU),
                                                   ncol=length(colsumU)))
 
-    curRho <- predict(mp, newdata=data.frame(logX = c(0, meanLogX),
-                                             logOffset = mean(logOffset)))
+    curRho <- predict(mp, newdata=data.frame(logX = c(0, meanLogX)))
     rhoBase <- curRho[1]
     curRho <- exp(curRho[-1]) / exp(rhoBase) #as compared to no expression of repressing TFs
-    # plot(x=exp(meanLogX[1,])-1, y=curRho,
-    #      xlab="Repressor expression", ylab="Thinning factor")
     rho_tc[rr,] <- curRho
   }
   return(rho_tc)
