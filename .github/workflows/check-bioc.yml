@@ -80,9 +80,9 @@ jobs:
         uses: actions/checkout@v2
 
       ## R is already included in the Bioconductor docker images
-      - name: Setup R from r-lib
-        if: runner.os != 'Linux'
+      - name: Set up R
         uses: r-lib/actions/setup-r@master
+        if: matrix.config.image == null
         with:
           r-version: ${{ matrix.config.r }}
 
