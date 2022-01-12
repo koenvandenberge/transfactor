@@ -47,5 +47,5 @@ test_that("DirMult without prior equals Poisson result in simple setting", {
   resDirMultNoAlpha <- estimateActivity(counts, X, model="dirMult", alphaScale = "none")
   resDirMultNoAlpha2 <- estimateActivity(counts, X, model="dirMultAlpha", alphaScale = "none")
   expect_equal(resPoisson$mu_tc, resDirMultNoAlpha$mu_tc)
-  expect_equal(resPoisson$mu_tc, resDirMultNoAlpha2$mu_tc, ignore_attr = TRUE)
+  expect_equal(c(resPoisson$mu_tc), c(resDirMultNoAlpha2$mu_tc), ignore_attr = TRUE)
 })
