@@ -170,7 +170,6 @@ pruneRepressingLinks <- function(counts, X){
 }
 
 scaleAlpha <- function(Y_gc, XPos, alpha, alphaScale, design){
-  message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
   alpha_gtcList <- list()
   for(cc in 1:ncol(design)){
     alpha_c <- alpha

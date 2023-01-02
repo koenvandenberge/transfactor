@@ -289,6 +289,7 @@ dirMultEstimation <- function(counts,
   if(alphaScale == "none"){
     alpha <- XPos
   } else {
+    message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
     alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
   }
 
@@ -513,6 +514,7 @@ dirMultEstimationAlpha <- function(counts,
   if(alphaScale == "none"){
     alpha <- XPos
   } else {
+    message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
     alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
     alpharange <- range(alpha_gtcList)
   }
@@ -662,6 +664,7 @@ dirMultEstimationAlpha <- function(counts,
     if(alphaScale == "none"){
       alpha <- XPos
     } else {
+      message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
       alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
     }
 
