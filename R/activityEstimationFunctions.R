@@ -344,6 +344,10 @@ dirMultEstimation <- function(counts,
                    mu_tc = mu_tc,
                    Y_gc = Y_gc,
                    tfNames = tfNames)
+    #### added on 24/01/23
+    # not sure as this is (a) already piNew? (b) does not use prior.
+    # pi_gtc <- Z_gtc / Y_gc[unlist(lapply(strsplit(rownames(Z_gtc),split=";"),"[[",2)),]
+
 
     if(iter == 1){
       alpha_gtc <- matrix(NA, nrow=nrow(Z_gtc), ncol=ncol(design))
@@ -351,7 +355,6 @@ dirMultEstimation <- function(counts,
         alpha_gtc[] <- 1
       } else {
         for(cc in seq_len(ncol(design))){
-          alpha_gt <- Z_gtc
           tfIk <- unlist(lapply(strsplit(rownames(Z_gtc), split=";"), "[[", 1))
           geneIk <- unlist(lapply(strsplit(rownames(Z_gtc), split=";"), "[[", 2))
           alpha_gt <- alpha_gtcList[[cc]][cbind(geneIk, tfIk)]
@@ -362,6 +365,8 @@ dirMultEstimation <- function(counts,
 
     ## M-step: estimate mean for each bin
     mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design)) + alpha_gtc - 1
+    ### adapted on 24/01/23
+    # TODO: pi = (pi*Y + alpha - 1) / sum(pi*Y + alpha - 1)
     if(any(mu_gtc<0)) mu_gtc[mu_gtc<0] <- 0
 
     ## log-likelihood (this actually takes quite some time...)
@@ -436,6 +441,286 @@ dirMultEstimation <- function(counts,
               design = design))
 }
 
+
+#######################################################
+############### DIRICHLET-MULTINOMIAL USING PI ########
+#######################################################
+
+
+
+dirMultEstimation2 <- function(counts,
+                              X,
+                              alpha = NULL,
+                              rho_t=NULL,
+                              U=NULL,
+                              nIters=20,
+                              plot=FALSE,
+                              verbose=FALSE,
+                              epsilon=1e-2,
+                              iterOLS=0,
+                              alphaScale=1,
+                              repressions = TRUE,
+                              sparse = TRUE,
+                              lassoFamily = "gaussian"){
+  # counts is nGenes x nCells count matrix of gene expression
+  # X is TF regulation matrix with dims nGenes x nTranscriptionFactors
+  # U is nCells x nVariables design matrix
+  # nIters is number of iterations
+  # qSteps are the quantile steps to make pseudotime bins
+  # alphaScale is how you want to scale the prior vs the data. alphaScale=1 means we believe
+  #       the prior as much as we believe the dat. alphaScale=1/2 means we believe the prior
+  #       half of what we believe the data.
+  # alphaScale = "none" means no effect of alpha and reduced to Poisson model.
+  # Note that providing a very low alphaScale will result in many mu_tc=0, since due to the -1 in the
+  #   calculation for mu_gtc, many will be negative and will be reset to zero.
+
+  ## checks on X
+  if(is.null(rownames(X))){
+    stop("Please provide rownames for X.")
+  }
+
+  if(!all(rownames(X) %in% rownames(counts))){
+    stop("Not all gene names in X are present in counts.")
+  }
+
+  # counts <- counts[rownames(X),]
+
+  if(repressions){
+    pruned <- pruneRepressingLinks(counts, X)
+    XPos <- pruned$XPos
+    countsRep <- pruned$countsRep
+    dfRepr <- pruned$dfRepr
+  } else {
+    if(any(X == -1)){
+      stop("Repressing links are present in GRN, but repressions is set to FALSE.")
+    }
+    XPos <- X
+    countsRep <- counts
+  }
+
+  counts <- counts[rownames(XPos),]
+  alpha <- alpha[rownames(XPos),]
+
+  ## checks on alpha
+  alpha <- alpha[rownames(XPos), colnames(XPos)]
+  if(is.null(alpha)){
+    message("alpha not provided, using X instead.")
+    alpha <- XPos
+  }
+  if(!all(alpha[XPos==0] == 0)){
+    id <- which(alpha[XPos==0] != 0)
+    message("alpha_gt cannot be positive if there is no edge in the GRN,",
+            "setting alpha for ", length(id),  " links to zero.")
+    alpha[id] <- 0
+  }
+
+  if(any(alpha>0 & alpha<1)){
+    smallAlpha <- which(alpha>0 & alpha<1)
+    warning(paste0("alpha_gt must be 0 or greater than or equal to 1. Converting ",
+                   length(smallAlpha)," values to 1."))
+    alpha[smallAlpha] <- 1
+  }
+
+
+  if(is.null(colnames(XPos))){
+    colnames(XPos) <- paste0("tf", 1:ncol(XPos))
+  }
+
+  # get design groups
+  design <- U
+
+  ## get sufficient statistics
+  Y_gc <- counts %*% design
+
+  ## set alpha to corresponding scale
+  if(alphaScale == "none"){
+    alpha <- XPos
+  } else {
+    # TODO: in gamma modelbased simulation this returnls alpha == 0
+    # where they used to be 1.
+    message("Prior versus data weight is tuned to be ", alphaScale*100, "%.")
+    alpha_gtcList <- scaleAlpha(Y_gc, XPos, alpha, alphaScale, design)
+  }
+
+  tfNames <- colnames(XPos)
+
+  ## initialize
+  # initialize pi
+  pi_gtc <- array(XPos / rowSums(XPos), dim=c(nrow(XPos), ncol(XPos), ncol(design)))
+  if(sparse){
+    mu_tc <- sparseInitialization_sufStats(counts_suf = Y_gc,
+                                           design = design,
+                                           X = XPos,
+                                           iterOLS = iterOLS,
+                                           lassoFamily = lassoFamily)
+  } else {
+    ### note that this is the mean across all genes a TF is regulating.
+    ### we could consider other properties
+    mu_tc <- matrix(NA, nrow=ncol(XPos), ncol=ncol(design))
+    for(tt in 1:ncol(XPos)){
+      weights <- pi_gtc[,tt,1] # same for all design columns
+      hlp <- weights * Y_gc
+      mu_tc[tt,] <- colMeans(hlp[weights > 0,,drop=FALSE])
+    }
+    rownames(mu_tc) <- colnames(XPos)
+  }
+
+
+  ## incorporate repressions
+  if(repressions){
+    rho_tc <- thinningFactor(counts=countsRep,
+                             X=X,
+                             dfRepr=dfRepr,
+                             U=U)
+    rho_tc <- rho_tc[rownames(rho_tc) %in% rownames(mu_tc),]
+    mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
+    if(is.null(rho_tc)) repressions <- FALSE
+  }
+
+  iter <- 0
+  while(iter < nIters){
+    iter <- iter + 1
+    if(verbose){
+      if(iter == 1){
+        message(paste0("iteration ", iter, "\n"))
+      } else {
+        message(paste0("iteration ", iter, ". Log-lik: ", round(tail(llAll,1), 3), "\n"))
+      }
+    }
+
+    ## E-step: for a gene, select its regulating TFs, and normalize them
+    # Z_gtc <- EStep(XPos = XPos,
+    #                mu_tc = mu_tc,
+    #                Y_gc = Y_gc,
+    #                tfNames = tfNames)
+    #### added on 31/01/23
+    ### for each design group: (make an array of nrow(X), ncol(X), ncol(design))
+    # Z_gtc <- diag(Y_gc[,1]) %*% pi_gtc
+    # Z_gtc <- array(Z_gtc, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
+    # TODO: check if works appropriately with multiple design columns
+    Z_gtc <- EStep2(XPos = XPos,
+                   mu_tc = mu_tc,
+                   Y_gc = Y_gc,
+                   design = design)
+
+
+    if(iter == 1){
+      alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
+      if(alphaScale == "none"){ # no effect of alpha => Poisson model
+        alpha_gtc[] <- 1
+      } else {
+        for(cc in seq_len(ncol(design))){
+          alpha_gtc[,,cc] <- alpha_gtcList[[cc]]
+          # alpha should minimum be 1.
+          alpha_gtc[,,cc][XPos==1][which(alpha_gtc[,,cc][XPos==1]<1)] <- 1
+        }
+      }
+    }
+
+    ## M-step: estimate mean for each bin
+    # TODO: this should be outside of the loop
+    mu_gc <- Y_gc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design))
+    # Original: mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design)) + alpha_gtc - 1
+    mu_gtc <- array(0, dim=c(nrow(XPos), ncol(XPos), ncol(design)))
+    ### adapted on 31/01/23
+    ## TODO make efficient
+    ### for each design group:
+    for(cc in 1:ncol(design)){
+      # denom <- (diag(Z_gtc[,,cc] %*% t(alpha_gtc[,,cc])) - rowSums(XPos))
+      for(gg in 1:nrow(XPos)){
+        posid <- which(XPos[gg,]>0)
+        # pi_gtc[gg,posid] <- (Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1) / denom[gg]
+        curPi <- ((Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10) / (sum(Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10)
+        if(all(curPi==1)) curPi <- rep(1/length(posid), length(posid)) # when all Z=0
+        stopifnot(all.equal.numeric(sum(curPi),1))
+        pi_gtc[gg,posid,cc] <- curPi
+      }
+      mu_gtc[,,cc] <- diag(mu_gc[,cc]) %*% pi_gtc[,,cc]
+    }
+    # stopifnot(all(rowSums(pi_gtc)==1))
+    if(any(mu_gtc<0)) mu_gtc[mu_gtc<0] <- 0
+
+    ## update mu_tc
+    # tfRows <- unlist(lapply(strsplit(rownames(mu_gtc), split=";"), "[[", 1))
+    # mu_tc <- t(sapply(unique(tfNames), function(curTF){
+    #   tfid <- which(tfRows == curTF)
+    #   colMeans(mu_gtc[tfid,,drop=FALSE])
+    # }))
+    # if(ncol(design) == 1) mu_tc <- t(mu_tc)
+    ### adapted on 31/01/23
+    #TODO: make efficient
+    for(cc in 1:ncol(design)){
+      for(tt in 1:ncol(XPos)){
+        mu_tc[tt,cc] <- mean(mu_gtc[which(XPos[,tt]==1),tt,cc])
+      }
+    }
+
+
+    ## log-likelihood (this actually takes quite some time...)
+    llAllCur <- sum(log(dpois(x=round(Z_gtc), lambda=mu_gtc)+1e-16))
+
+    ## incorporate thinning factor
+    if(repressions) mu_tc[rownames(rho_tc),] <- mu_tc[rownames(rho_tc),]*rho_tc
+
+    if(iter == 1){
+      llAll <- llAllCur
+    } else {
+      llAll <- c(llAll, llAllCur)
+    }
+
+    if(plot){
+      par(mfrow=c(1,2))
+      plot(x=1:iter, y=llAll, type="b", xlab="Iteration", ylab="Log likelihood")
+      #hist(probVec, breaks=40)
+    }
+    ### check convergence
+    if(iter > 1){
+      if(abs(llAll[length(llAll)] - llAll[length(llAll)-1]) < epsilon){
+        message("Converged.")
+        # TODO: I guess we should now be returning estimates including alpha.
+        # ## get estimates without alpha as final update.
+        # # # final mu_tc
+        # # mu_tc <- t(sapply(unique(tfNames), function(curTF){
+        # #   tfid <- which(tfRows == curTF)
+        # #   colMeans(mu_gtc[tfid,,drop=FALSE])
+        # # }))
+        # # if(ncol(design) == 1) mu_tc <- t(mu_tc)
+        # # final mu_gtc
+        # mu_gtc <- Z_gtc %*% diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design))
+        # # final mu_tc
+        # mu_tc <- t(sapply(unique(tfNames), function(curTF){
+        #   tfid <- which(tfRows == curTF)
+        #   colMeans(mu_gtc[tfid,,drop=FALSE])
+        # }))
+        # if(ncol(design) == 1) mu_tc <- t(mu_tc)
+        return(list(mu_tc=mu_tc,
+                    mu_gtc=mu_gtc,
+                    countsSufStats = Y_gc,
+                    design = design))
+      }
+    }
+  }
+
+  # # # final mu_tc
+  # # mu_tc <- t(sapply(unique(tfNames), function(curTF){
+  # #   tfid <- which(tfRows == curTF)
+  # #   colMeans(mu_gtc[tfid,,drop=FALSE])
+  # # }))
+  # # if(ncol(design) == 1) mu_tc <- t(mu_tc)
+  # # final mu_gtc
+  # mu_gtc <- Z_gtc %*% array(diag(1/colSums(design), nrow=ncol(design), ncol=ncol(design)),
+  #                           dim=c(ncol(design),ncol(design),ncol(design)))
+  # # final mu_tc
+  # mu_tc <- t(sapply(unique(tfNames), function(curTF){
+  #   tfid <- which(tfRows == curTF)
+  #   colMeans(mu_gtc[tfid,,drop=FALSE])
+  # }))
+  # if(ncol(design) == 1) mu_tc <- t(mu_tc)
+  return(list(mu_tc=mu_tc,
+              mu_gtc=mu_gtc,
+              countsSufStats = Y_gc,
+              design = design))
+}
 
 
 #######################################################

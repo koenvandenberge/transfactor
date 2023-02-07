@@ -78,6 +78,7 @@ setMethod(f = "estimateActivity",
 
 
             # TODO: restrict range on alpha (lower bound)?
+            # TODO: check alpha scaling e.g. when all alpha=1 no scaling happens.
 
             ## checks on X
             if(is.null(rownames(X)) | is.null(rownames(counts))){
@@ -131,7 +132,7 @@ setMethod(f = "estimateActivity",
                                        rho_t = rho_t,
                                        sparse = sparse)
             } else if(model == "dirMult"){
-              res <- dirMultEstimation(counts = counts,
+              res <- dirMultEstimation2(counts = counts,
                                        X = X,
                                        U = U,
                                        alpha = alpha,

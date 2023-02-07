@@ -201,6 +201,18 @@ EStep <- function(XPos, mu_tc, Y_gc, tfNames){
 }
 
 
+EStep2 <- function(XPos, mu_tc, Y_gc, design){
+  sumGene <- XPos %*% mu_tc
+  countFracs <- Y_gc / (sumGene+1e-10)
+  Z_gtc <- array(0, dim=c(nrow(XPos), ncol(XPos), ncol(design)))
+  for(tt in 1:ncol(XPos)){
+    id <- which(XPos[,tt] == 1)
+    curZ_gtc <- sweep(countFracs[id,,drop=FALSE], 2, mu_tc[tt,], "*") # Z = Y * (mu / sum(mu))
+    Z_gtc[id,tt,] <- curZ_gtc
+  }
+  return(Z_gtc)
+}
+
 
 
 getPi_gtc_sufStats <- function(mu_gtc, counts, pt=NULL, qSteps=0.01, U=NULL){
