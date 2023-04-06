@@ -1152,6 +1152,8 @@ dirMultEstimationAlpha2 <- function(counts,
       ## only need to make this once as remains unchanged.
       alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
       alpha_gtc[] <- 1
+    } else if(alphaScale == "none" & iter > 1){
+      next
     } else {
       # alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
       # for(cc in seq_len(ncol(design))){
