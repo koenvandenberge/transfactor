@@ -1007,21 +1007,21 @@ dirMultEstimationAlpha <- function(counts,
 ####### emp Bayes DIRICHLET-MULTINOMIAL USING PI ######
 #######################################################
 dirMultEstimationAlpha2 <- function(counts,
-                                   X,
-                                   alpha=NULL,
-                                   rho_t=NULL,
-                                   pt=NULL,
-                                   U=NULL,
-                                   nIters=20,
-                                   qSteps=0.01,
-                                   plot=FALSE,
-                                   verbose=FALSE,
-                                   epsilon=1e-2,
-                                   iterOLS=0,
-                                   repressions = TRUE,
-                                   sparse = TRUE,
-                                   alphaScale = 1,
-                                   lassoFamily = "gaussian"){
+                                    X,
+                                    alpha=NULL,
+                                    rho_t=NULL,
+                                    pt=NULL,
+                                    U=NULL,
+                                    nIters=20,
+                                    qSteps=0.01,
+                                    plot=FALSE,
+                                    verbose=FALSE,
+                                    epsilon=1e-2,
+                                    iterOLS=0,
+                                    repressions = TRUE,
+                                    sparse = TRUE,
+                                    alphaScale = 1,
+                                    lassoFamily = "gaussian"){
   # counts is nGenes x nCells count matrix of gene expression
   # X is TF regulation matrix with dims nGenes x nTranscriptionFactors
   # U is nCells x nVariables design matrix
@@ -1153,14 +1153,13 @@ dirMultEstimationAlpha2 <- function(counts,
       alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
       alpha_gtc[] <- 1
     } else if(alphaScale == "none" & iter > 1){
-      next
+      alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
+      for(cc in seq_len(ncol(design))){
+        alpha_gtc[,,cc] <- alpha
+        # alpha should minimum be 1.
+        alpha_gtc[,,cc][XPos==1][which(alpha_gtc[,,cc][XPos==1]<1)] <- 1
+      }
     } else {
-      # alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
-      # for(cc in seq_len(ncol(design))){
-      #   alpha_gtc[,,cc] <- alpha_gtcList[[cc]]
-      #   # alpha should minimum be 1.
-      #   alpha_gtc[,,cc][XPos==1][which(alpha_gtc[,,cc][XPos==1]<1)] <- 1
-      # }
       stop("alphaScale must be none.")
     }
     # } else if(iter > 1){
@@ -1212,49 +1211,47 @@ dirMultEstimationAlpha2 <- function(counts,
 
     ### M-step II: estimate alpha_gt
     ## TODO: faster way?
-    if(!alphaScale == "none"){
-      for(gg in 1:nrow(XPos)){
-        idTF <- which(XPos[gg,] == 1)
-        if(length(idTF) == 1) next
-        # if all mu's are zero, set alpha to zero.
-        if(all(mu_tc[idTF,] == 0)){
-          # pi_gtc <- mu_tc[idTF,,drop=FALSE]
-          # pi_gtc[] <- 1/nrow(mu_tc[idTF,,drop=FALSE])
-          alpha[cbind(gg, idTF)] <- 0
-          next
-        } else {
-          # pi_gtc <- sweep(mu_tc[idTF,,drop=FALSE]+1e-10, 2, colSums(mu_tc[idTF,,drop=FALSE])+1e-10, "/")
-          # ## make sure sums to 1
-          # pi_gtc <- sweep(pi_gtc, 2, colSums(pi_gtc),"/")
-          curPiAlpha <- pi_gtc[gg, idTF,,drop=FALSE]
-        }
-        alpha_relative <- rowMeans(curPiAlpha)
-        # alpha_relative <- sapply(seq_len(nrow(pi_gtc)), function(rr){
-        #   if(any(mu_tc[idTF[rr],] > 0)){
-        #     return(mean(pi_gtc[rr, mu_tc[idTF[rr],] > 0]))
-        #   } else {
-        #     return(1e-10)
-        #   }
-        # })
-        alpha_relative <- alpha_relative / sum(alpha_relative)
-        # curAlpha <- sirt::dirichlet.mle(t(pi_gtc))$alpha
-        ## if a gene is regulated by only one TF, no need to estimate magnitude
-        if(!any(alpha_relative > .999)){
-          magnitudeOld <- sum(alpha[gg,])
-          if(magnitudeOld < 1e-10) magnitudeOld <- 1
-          magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(pi_gtc))
-        } else {
-          magnitudeNew <- nrow(pi_gtc)
-        }
-        alpha[cbind(gg, idTF)] <- alpha_relative*magnitudeNew
+    for(gg in 1:nrow(XPos)){
+      idTF <- which(XPos[gg,] == 1)
+      if(length(idTF) == 1) next
+      # if all mu's are zero, set alpha to zero.
+      if(all(mu_tc[idTF,] == 0)){
+        # pi_gtc <- mu_tc[idTF,,drop=FALSE]
+        # pi_gtc[] <- 1/nrow(mu_tc[idTF,,drop=FALSE])
+        alpha[cbind(gg, idTF)] <- 0
+        next
+      } else {
+        # pi_gtc <- sweep(mu_tc[idTF,,drop=FALSE]+1e-10, 2, colSums(mu_tc[idTF,,drop=FALSE])+1e-10, "/")
+        # ## make sure sums to 1
+        # pi_gtc <- sweep(pi_gtc, 2, colSums(pi_gtc),"/")
+        curPiAlpha <- pi_gtc[gg, idTF,,drop=FALSE]
       }
-      # reset where necessary
-      alpha[alpha<0] <- 0
-      # alpha[alpha > max(alpharange)] <- max(alpharange)
-      alpha[is.infinite(alpha)] <- max(alpharange)
-      # alpha[alpha < 1 & alpha > 0] <- 1
-      # alpha[alpha > 1e4] <- 100
+      alpha_relative <- rowMeans(curPiAlpha)
+      # alpha_relative <- sapply(seq_len(nrow(pi_gtc)), function(rr){
+      #   if(any(mu_tc[idTF[rr],] > 0)){
+      #     return(mean(pi_gtc[rr, mu_tc[idTF[rr],] > 0]))
+      #   } else {
+      #     return(1e-10)
+      #   }
+      # })
+      alpha_relative <- alpha_relative / sum(alpha_relative)
+      # curAlpha <- sirt::dirichlet.mle(t(pi_gtc))$alpha
+      ## if a gene is regulated by only one TF, no need to estimate magnitude
+      if(!any(alpha_relative > .999)){
+        magnitudeOld <- sum(alpha[gg,])
+        if(magnitudeOld < 1e-10) magnitudeOld <- 1
+        magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(pi_gtc))
+      } else {
+        magnitudeNew <- nrow(pi_gtc)
+      }
+      alpha[cbind(gg, idTF)] <- alpha_relative*magnitudeNew
     }
+    # reset where necessary
+    alpha[alpha<0] <- 0
+    # alpha[alpha > max(alpharange)] <- max(alpharange)
+    # alpha[is.infinite(alpha)] <- max(alpharange)
+    # alpha[alpha < 1 & alpha > 0] <- 1
+    # alpha[alpha > 1e4] <- 100
     ## no scaling of alpha in empirical Bayes model.
 
     ## incorporate thinning factor
