@@ -16,8 +16,9 @@ setGeneric(
 #' @param ... parameters including:
 setGeneric(
   name = "tfCounts",
-  def = function(mu_gtc = "matrix",
-                 counts = "matrix",
+  def = function(counts = "matrix",
+                 pi_gtc,
+                 mu_gtc,
                  ...) {
     standardGeneric("tfCounts")
   }

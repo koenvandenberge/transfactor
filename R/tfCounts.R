@@ -1,3 +1,5 @@
+# TODO: allow providing only pigtc or mugtc as input.
+
 #' @title Get counts produced by each transcription factor.
 #' @description Get counts produced by each transcription factor.
 #'
@@ -16,11 +18,17 @@
 #' @export
 #' @rdname tfCounts
 setMethod(f = "tfCounts",
-          signature = c(mu_gtc = "matrix",
-                        counts = "matrix"),
-          definition = function(mu_gtc,
-                                counts,
+          signature = c(counts = "matrix",
+                        pi_gtc = NULL,
+                        mu_gtc = "matrix"),
+          definition = function(counts,
+                                pi_gtc=NULL,
+                                mu_gtc,
                                 design=NULL){
+
+   if(!(is.null(pi_gtc) | is.null(mu_gtc))){
+     stop("Either provide pi_gtc or mu_gtc, not both.")
+   }
 
   if(is.null(design)){
     message("No design matrix provided. Working with intercept only.")
@@ -56,4 +64,42 @@ setMethod(f = "tfCounts",
   }
   return(Y_ti)
 }
+)
+
+
+#' @name tfCounts
+setMethod(f = "tfCounts",
+          signature = c(counts = "matrix",
+                        pi_gtc = "array",
+                        mu_gtc = NULL),
+          definition = function(counts,
+                                pi_gtc,
+                                mu_gtc=NULL,
+                                design=NULL){
+
+            if(!(is.null(pi_gtc) | is.null(mu_gtc))){
+              stop("Either provide pi_gtc or mu_gtc, not both.")
+            }
+
+            if(is.null(design)){
+              message("No design matrix provided. Working with intercept only.")
+              ict <- rep(1, length = ncol(counts))
+              design <- stats::model.matrix(~ -1 + ict)
+            }
+
+            if(nrow(design) != ncol(counts)){
+              stop("Dimensions of design matrix and count matrix don't match.")
+            }
+
+            lvl <- unlist(apply(design,1, function(row){
+              which(row == 1)
+            }))
+
+            Y_ti <- matrix(0, nrow=ncol(pi_gtc), ncol=ncol(counts))
+            for(cc in 1:dim(pi_gtc)[3]){
+              Y_ti[,lvl==cc] <- t(pi_gtc[,,cc]) %*% counts[,lvl==cc]
+            }
+
+            return(Y_ti)
+          }
 )

@@ -2,17 +2,19 @@
 % Please edit documentation in R/allGenerics.R, R/tfCounts.R
 \name{tfCounts}
 \alias{tfCounts}
-\alias{tfCounts,matrix,matrix-method}
+\alias{tfCounts,matrix,ANY,matrix-method}
 \title{tfCounts}
 \usage{
-tfCounts(mu_gtc = "matrix", counts = "matrix", ...)
+tfCounts(counts = "matrix", pi_gtc, mu_gtc, ...)
 
-\S4method{tfCounts}{matrix,matrix}(mu_gtc, counts, design = NULL)
+\S4method{tfCounts}{matrix,ANY,matrix}(counts, pi_gtc = NULL, mu_gtc, design = NULL)
+
+\S4method{tfCounts}{matrix,array,ANY}(counts, pi_gtc, mu_gtc = NULL, design = NULL)
 }
 \arguments{
-\item{mu_gtc}{Output from estimateActivity.}
-
 \item{counts}{Gene expression counts.}
+
+\item{mu_gtc}{Output from estimateActivity.}
 
 \item{...}{parameters including:}
 

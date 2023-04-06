@@ -1,6 +1,6 @@
 Package: transfactor
 Title: Transcription factor activity estimator
-Version: 0.99.07
+Version: 0.99.08
 Date: 2021-04-21
 Authors@R: 
     person(given = "Koen",
@@ -20,7 +20,7 @@ biocViews:
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Depends:
     SingleCellExperiment,
     glmnet,
@@ -46,3 +46,4 @@ Collate:
     'estimateActivity.R'
     'tfCounts.R'
     'tfDistance.R'
+    'utils_revamp.R'

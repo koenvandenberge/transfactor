@@ -62,7 +62,7 @@ setMethod(f = "estimateActivity",
                                 repressions = TRUE,
                                 rho_t = NULL){
 ## for dev:
-# U = NULL
+# U = U
 # model = "poisson"
 # alpha = NULL
 # alphaScale = 1
@@ -147,7 +147,7 @@ setMethod(f = "estimateActivity",
                                        rho_t = rho_t,
                                        sparse = sparse)
             } else if(model == "dirMultAlpha"){
-              res <- dirMultEstimationAlpha(counts = counts,
+              res <- dirMultEstimationAlpha2(counts = counts,
                                        X = X,
                                        U = U,
                                        alpha = alpha,
