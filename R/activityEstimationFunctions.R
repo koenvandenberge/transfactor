@@ -1151,7 +1151,7 @@ dirMultEstimationAlpha2 <- function(counts,
     if(alphaScale == "none" & iter == 1){ # no effect of alpha => Poisson model
       ## only need to make this once as remains unchanged.
       alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
-      alpha_gtc[] <- 1
+      alpha_gtc[,,] <- alpha
     } else if(alphaScale == "none" & iter > 1){
       alpha_gtc <- array(NA, dim=c(nrow(Z_gtc), ncol(Z_gtc), ncol(design)))
       for(cc in seq_len(ncol(design))){
@@ -1224,7 +1224,7 @@ dirMultEstimationAlpha2 <- function(counts,
         # pi_gtc <- sweep(mu_tc[idTF,,drop=FALSE]+1e-10, 2, colSums(mu_tc[idTF,,drop=FALSE])+1e-10, "/")
         # ## make sure sums to 1
         # pi_gtc <- sweep(pi_gtc, 2, colSums(pi_gtc),"/")
-        curPiAlpha <- pi_gtc[gg, idTF,,drop=FALSE]
+        curPiAlpha <- pi_gtc[gg, idTF,]
       }
       alpha_relative <- rowMeans(curPiAlpha)
       # alpha_relative <- sapply(seq_len(nrow(pi_gtc)), function(rr){
@@ -1240,9 +1240,9 @@ dirMultEstimationAlpha2 <- function(counts,
       if(!any(alpha_relative > .999)){
         magnitudeOld <- sum(alpha[gg,])
         if(magnitudeOld < 1e-10) magnitudeOld <- 1
-        magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(pi_gtc))
+        magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(curPiAlpha))
       } else {
-        magnitudeNew <- nrow(pi_gtc)
+        magnitudeNew <- nrow(curPiAlpha)
       }
       alpha[cbind(gg, idTF)] <- alpha_relative*magnitudeNew
     }
@@ -1284,6 +1284,7 @@ dirMultEstimationAlpha2 <- function(counts,
         return(list(mu_tc=mu_tc,
                     mu_gtc=mu_gtc,
                     pi_gtc=pi_gtc,
+                    alpha=alpha,
                     countsSufStats = Y_gc,
                     design = design))
       }
@@ -1300,6 +1301,7 @@ dirMultEstimationAlpha2 <- function(counts,
   return(list(mu_tc=mu_tc,
               mu_gtc=mu_gtc,
               pi_gtc=pi_gtc,
+              alpha=alpha,
               countsSufStats = Y_gc,
               design = design))
 }
