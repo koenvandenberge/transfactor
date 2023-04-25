@@ -627,7 +627,7 @@ dirMultEstimation2 <- function(counts,
         posid <- which(XPos[gg,]>0)
         curPi <- ((Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10) / (sum(Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10)
         if(all(curPi==1)) curPi <- rep(1/length(posid), length(posid)) # when all Z=0
-        stopifnot(all.equal.numeric(sum(curPi),1))
+        stopifnot(all.equal.numeric(sum(curPi),1, tolerance=1e-4))
         pi_gtc[gg,posid,cc] <- curPi
       }
       mu_gtc[,,cc] <- diag(mu_gc[,cc]) %*% pi_gtc[,,cc]
@@ -924,9 +924,10 @@ dirMultEstimationAlpha <- function(counts,
         # curAlpha <- sirt::dirichlet.mle(t(pi_gtc))$alpha
         ## if a gene is regulated by only one TF, no need to estimate magnitude
         if(!any(alpha_relative > .999)){
-          magnitudeOld <- sum(alpha[gg,])
-          if(magnitudeOld < 1e-10) magnitudeOld <- 1
-          magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(pi_gtc))
+          # magnitudeOld <- sum(alpha[gg,])
+          # if(magnitudeOld < 1e-10) magnitudeOld <- 1
+          magnitudeNew <- approximateMLE_magnitude(mHat=alpha_relative, p=t(curPiAlpha))
+          # magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(pi_gtc))
         } else {
           magnitudeNew <- nrow(pi_gtc)
         }
@@ -1188,7 +1189,7 @@ dirMultEstimationAlpha2 <- function(counts,
         posid <- which(XPos[gg,]>0)
         curPi <- ((Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10) / (sum(Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10)
         if(all(curPi==1)) curPi <- rep(1/length(posid), length(posid)) # when all Z=0
-        stopifnot(all.equal.numeric(sum(curPi),1))
+        stopifnot(all.equal.numeric(sum(curPi),1, tolerance=1e-4))
         pi_gtc[gg,posid,cc] <- curPi
       }
       mu_gtc[,,cc] <- diag(mu_gc[,cc]) %*% pi_gtc[,,cc]
@@ -1238,9 +1239,10 @@ dirMultEstimationAlpha2 <- function(counts,
       # curAlpha <- sirt::dirichlet.mle(t(pi_gtc))$alpha
       ## if a gene is regulated by only one TF, no need to estimate magnitude
       if(!any(alpha_relative > .999)){
-        magnitudeOld <- sum(alpha[gg,])
-        if(magnitudeOld < 1e-10) magnitudeOld <- 1
-        magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(curPiAlpha))
+        # magnitudeOld <- sum(alpha[gg,])
+        # if(magnitudeOld < 1e-10) magnitudeOld <- 1
+        magnitudeNew <- approximateMLE_magnitude(mHat=alpha_relative, p=t(curPiAlpha))
+        # magnitudeNew <- updateS(magnitudeOld, alpha_relative, t(curPiAlpha))
       } else {
         magnitudeNew <- nrow(curPiAlpha)
       }

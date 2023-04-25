@@ -1,12 +1,19 @@
-updateS <- function(sOld, mHat, p){
-  # sOld is current precision estimate
-  # mHat is current fraction estimate
-  # p is the data: matrix of multinomial probabilities.
-  # In p, each column is a class, each row is a data point.
-  log_bar_p_k <- colMeans(log(p))
+# updateS <- function(sOld, mHat, p){
+#   # sOld is current precision estimate
+#   # mHat is current fraction estimate
+#   # p is the data: matrix of multinomial probabilities.
+#   # In p, each column is a class, each row is a data point.
+#   log_bar_p_k <- colMeans(log(p))
+#   K <- ncol(p)
+#   sNew <- (K-1)/((K-1)/sOld - digamma(sOld) + sum(mHat*digamma(sOld*mHat)) - sum(mHat*log_bar_p_k))
+#   return(sNew)
+# }
+
+approximateMLE_magnitude <- function(mHat, p){
+  # mHat is relative Dirichlet alpha (alpha / magnitude)
+  # p is matrix of Multinomial probabilities
   K <- ncol(p)
-  sNew <- (K-1)/((K-1)/sOld - digamma(sOld) + sum(mHat*digamma(sOld*mHat)) - sum(mHat*log_bar_p_k))
-  return(sNew)
+  sHat <- ((K-1)/2) / -sum(mHat*colMeans(log(t(t(p) / mHat))))
 }
 
 
