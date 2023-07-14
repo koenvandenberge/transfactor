@@ -19,9 +19,9 @@ estimateActivity(counts, X, ...)
   verbose = FALSE,
   epsilon = 0.01,
   iterOLS = 0,
-  sparse = TRUE,
+  sparse = FALSE,
   lassoFamily = "gaussian",
-  repressions = TRUE,
+  repressions = FALSE,
   rho_t = NULL
 )
 }
@@ -36,7 +36,7 @@ estimateActivity(counts, X, ...)
 contain an intercept.}
 
 \item{model}{The model to use. Options are \code{"poisson"}, \code{"dirMult"},
-and \code{"dirMultEmpBayes"} (not recommended). Defaults to \code{"poisson"}.}
+and \code{"dirMulteBayes"} (not recommended). Defaults to \code{"poisson"}.}
 
 \item{alpha}{Prior belief in GRN edges.}
 

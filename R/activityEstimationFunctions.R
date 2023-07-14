@@ -528,7 +528,6 @@ dirMultEstimationAlpha2 <- function(counts,
   }
 
   iter <- 0
-  profvis::profvis({
   while(iter < nIters){
     iter <- iter + 1
     if(verbose){
@@ -680,7 +679,6 @@ dirMultEstimationAlpha2 <- function(counts,
       }
     }
   }
-  })
 
 
   return(list(mu_tc=mu_tc,

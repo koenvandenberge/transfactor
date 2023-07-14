@@ -2,21 +2,21 @@
 % Please edit documentation in R/allGenerics.R, R/tfCounts.R
 \name{tfCounts}
 \alias{tfCounts}
-\alias{tfCounts,matrix,ANY,matrix-method}
+\alias{tfCounts,matrix-method}
 \title{tfCounts}
 \usage{
-tfCounts(counts = "matrix", pi_gtc, mu_gtc, ...)
+tfCounts(counts = "matrix", ...)
 
-\S4method{tfCounts}{matrix,ANY,matrix}(counts, pi_gtc = NULL, mu_gtc, design = NULL)
-
-\S4method{tfCounts}{matrix,array,ANY}(counts, pi_gtc, mu_gtc = NULL, design = NULL)
+\S4method{tfCounts}{matrix}(counts, mu_gtc = NULL, pi_gtc = NULL, design = NULL)
 }
 \arguments{
 \item{counts}{Gene expression counts.}
 
-\item{mu_gtc}{Output from estimateActivity.}
-
 \item{...}{parameters including:}
+
+\item{mu_gtc}{Output from \code{estimateActivity}. Either one of \code{mu_gtc} or \code_{pi_gtc} should be provided.}
+
+\item{pi_gtc}{Output from \code{estimateActivity}. Either one of \code{mu_gtc} or \code_{pi_gtc} should be provided.}
 
 \item{design}{Design matrix.}
 }
@@ -28,10 +28,18 @@ factors and columns to cells.
 Get counts produced by each transcription factor.
 }
 \examples{
+set.seed(2)
 counts <- matrix(rpois(n= 1e4, lambda=4), nrow=100, ncol=100)
 X <- matrix(0, nrow=100, ncol=12)
 X[cbind(sample(100, size=250, replace=TRUE), sample(12, size=250, replace=TRUE))] <- 1
 rownames(X) <- rownames(counts) <- paste0("gene",1:100)
-act <- estimateActivity(counts, X)
-Y_ti <- tfCounts(act$mu_gtc, counts)
+counts <- counts[!rowSums(X)==0,]
+X <- X[!rowSums(X)==0,]
+cellType <- gl(2,50)
+design <- model.matrix(~-1 + cellType)
+act <- estimateActivity(counts=counts, X=X, U=design, model="poisson")
+Y_ti <- tfCounts(counts=counts, mu_gtc=act$mu_gtc, design=design)
+
+act <- estimateActivity(counts=counts, X=X, U=design, model="dirMult")
+Y_ti <- tfCounts(counts=counts, pi_gtc=act$pi_gtc, design=design)
 }

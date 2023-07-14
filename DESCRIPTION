@@ -46,4 +46,5 @@ Collate:
     'estimateActivity.R'
     'tfCounts.R'
     'tfDistance.R'
+    'toyDataForDev.R'
     'utils_revamp.R'
