@@ -57,9 +57,9 @@ setMethod(f = "estimateActivity",
                                 verbose = FALSE,
                                 epsilon = 1e-2,
                                 iterOLS = 0,
-                                sparse = TRUE,
+                                sparse = FALSE,
                                 lassoFamily = "gaussian",
-                                repressions = TRUE,
+                                repressions = FALSE,
                                 rho_t = NULL){
 ## for dev:
 # U = U

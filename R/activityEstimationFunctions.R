@@ -1187,6 +1187,10 @@ dirMultEstimationAlpha2 <- function(counts,
     for(cc in 1:ncol(design)){
       for(gg in 1:nrow(XPos)){
         posid <- which(XPos[gg,]>0)
+        if(all(Z_gtc[gg,posid,cc]==0)){
+          pi_gtc[gg,posid,cc] <- rep(1/length(posid), length(posid))
+          next
+        }
         curPi <- ((Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10) / (sum(Z_gtc[gg,posid,cc] + alpha_gtc[gg,posid,cc] - 1)+1e-10)
         if(all(curPi==1)) curPi <- rep(1/length(posid), length(posid)) # when all Z=0
         stopifnot(all.equal.numeric(sum(curPi),1, tolerance=1e-4))
@@ -1252,6 +1256,7 @@ dirMultEstimationAlpha2 <- function(counts,
     alpha[alpha<0] <- 0
     # alpha[alpha > max(alpharange)] <- max(alpharange)
     # alpha[is.infinite(alpha)] <- max(alpharange)
+    alpha[is.infinite(alpha)] <- 6.276297e+54
     # alpha[alpha < 1 & alpha > 0] <- 1
     # alpha[alpha > 1e4] <- 100
     ## no scaling of alpha in empirical Bayes model.
